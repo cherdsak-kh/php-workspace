@@ -1,6 +1,14 @@
+# Environment & Credentials
+.env
+portainer-credentials.txt
+*.token
+*.key
+
 # User projects inside php/src/ (each project has its own git repo)
 php/src/*
 !php/src/.gitkeep
+!php/src/index.php
+php/src/portainer-token.json
 
 # Scratch / temporary scripts
 scratch/
@@ -10,3 +18,5 @@ scratch/
 .DS_Store
 Thumbs.db
 *.log
+.idea/
+.vscode/
