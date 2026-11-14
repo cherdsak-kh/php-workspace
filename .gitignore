@@ -1,0 +1,12 @@
+# User projects inside php/src/ (each project has its own git repo)
+php/src/*
+!php/src/.gitkeep
+
+# Scratch / temporary scripts
+scratch/
+*.local.php
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.log
