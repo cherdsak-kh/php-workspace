@@ -1,82 +1,110 @@
 ---
 name: commit
 description: >-
-  Automate git status checking, continuous release tracking, pre-commit validation, and atomic commits across the monorepo repositories (easybook-app, easybook-service, easybook-project-manager).
+  Automate git status checking, Zero-Touch validation, Docker compose pre-commit validation,
+  continuous changelog tracking (CHANGELOG.md), and atomic conventional commits for php-workspace.
   Trigger ONLY when the user explicitly types `/commit` or asks to commit changes.
 ---
 
-# Git Commit Automation Skill for EasyBook
+# Git Commit Automation Skill for PHP Workspace
 
-Skill นี้ใช้สำหรับจัดการการ Commit โค้ดและเอกสารในโปรเจกต์ EasyBook App ตามมาตรฐาน Conventional Commits, การสะสมประวัติการเปลี่ยนแปลงลงไฟล์ Release อัตโนมัติ (Continuous Changelog Buffering) และกฎความปลอดภัยของโปรเจกต์
+Skill นี้ใช้สำหรับจัดการการตรวจสอบความปลอดภัย, Pre-commit Verification, การบันทึก Release Notes อัตโนมัติลงใน `CHANGELOG.md` และการ Commit โค้ด/คอนฟิกในโปรเจกต์ **`php-workspace` (Central Multi-PHP Development Hub)** ตามมาตรฐาน Conventional Commits อย่างเคร่งครัด
 
-## Workflow เมื่อผู้ใช้สั่ง `/commit`
+---
 
-1. **สแกนสถานะ Git ทั่วทั้งระบบ (Status Inspection):**
-   - ตรวจสอบ `git status` ใน 3 Repositories:
-     1. `easybook-app/` (Frontend)
-     2. `easybook-service/` (Backend)
-     3. `easybook-project-manager/` (Root Workspace & Planning)
+## 🛡️ กฎเหล็กประจำ Workspace (Safety & Zero-Touch Guard)
 
-2. **บันทึก Release Notes ต่อเนื่องอัตโนมัติ (Continuous Release Tracking) — บังคับ 100%:**
-   - 🔴 **กฎเหล็ก CHANGELOG (MANDATORY & NON-NEGOTIABLE): "อะไรที่เป็น changelog ต้องอัปเดต release เสมอ"**
-   - **เกณฑ์การตัดสินใจ (Changelog Qualification):** หากการเปลี่ยนแปลงมีผลต่อผู้ใช้หรือผู้ดูแลระบบ (UI, UX, Responsive, หน้าจอใหม่, ปรับแต่งสไตล์, เพิ่มปุ่ม, แก้ไขการแสดงผล, แก้บั๊ก, หรือฟังก์ชันการทำงานหลัก):
-     * **ถือเป็น Changelog ทั้งสิ้น** และ **ต้องอัปเดต `releases.ts` เสมอ ห้ามละเว้นเด็ดขาด**
-     * *(ห้ามอ้าง Do-NOT-Touch list ของไฟล์แผนงานอื่นมาเป็นเหตุผลในการข้ามไฟล์ releases.ts)*
-   - **ลำดับขั้นตอนปฏิบัติ:**
-     1. **ตรวจสอบเวอร์ชันปัจจุบัน:** อ่าน `version` จาก `easybook-app/package.json` (ระบบอยู่ในสายการผลิต `1.x.y`)
-     2. **คำนวณและปรับเปลี่ยนเวอร์ชันอัตโนมัติ (Production Auto-Bumping & Precedence Rules):**
-        - วิเคราะห์รายการเปลี่ยนแปลงที่จะบันทึกลงใน Release Notes:
-          * **กรณีมีรายการกลุ่ม `'ใหม่'` (New Feature / `feat`) $\ge 1$ รายการ (Highest Precedence):**
-            - ปรับขยับตำแหน่ง **`x`** (Minor bump: `1.(x+1).0`) และรีเซ็ต `y = 0` (เช่น `1.0.0` $\rightarrow$ `1.1.0`)
-          * **กรณีมีเฉพาะรายการกลุ่ม `'ปรับปรุง'` หรือ `'แก้ไข'` (Improvement / Fix / `refactor` / `perf` / UI Tweak):**
-            - ปรับขยับตำแหน่ง **`y`** (Patch bump: `1.x.(y+1)`) (เช่น `1.0.0` $\rightarrow$ `1.0.1`)
-          * **กรณีงานบำรุงรักษาภายในที่ไม่กระทบผู้ใช้ (Non-Functional Changes):**
-            - หาก Commit มีเฉพาะ `chore(deps)`, `chore(ci)`, หรือ `docs(planning)` ที่ไม่มีผลกระทบต่อ UI/UX หรือฟังก์ชันผู้ใช้ **ไม่ต้องขยับเวอร์ชัน** และไม่ต้องลง `releases.ts`
-        - **ซิงก์เวอร์ชัน Monorepo เสมอ:** ปรับค่า `version` ให้ตรงกันทั้งใน `easybook-app/package.json` และ `easybook-service/package.json`
-     3. **อัปเดตไฟล์ Release ของแต่ละ Portal ทันที (ขออนุมัติเขียนไฟล์ก่อนรัน Commit):**
-        - **Admin Portal:** `easybook-app/src/admin-portal/lib/releases.ts` (ใช้ภาษาทางการ/งานบริหารจัดการ)
-        - **Client Portal:** `easybook-app/src/client-portal/lib/releases.ts` (ใช้ภาษาเข้าใจง่ายสำหรับผู้ใช้ LINE)
-     4. **รูปแบบและโครงสร้างข้อมูล:**
-        - จัดหมวดหมู่ของสิ่งที่ทำลงในกลุ่มที่ถูกต้อง: `'ใหม่'`, `'ปรับปรุง'`, หรือ `'แก้ไข'`
-        - เปิดบล็อกเวอร์ชันใหม่ที่คำนวณได้ (`1.x.y`) ไว้ที่หัว Array โดยระบุ `date` เป็นวันที่ปัจจุบันในรูปแบบ พ.ศ. (เช่น `'3 ต.ค. 2569'`)
-     5. **มัดรวมเข้า Commit เดียวกัน (Strict Atomic Commit):**
-        - ไฟล์ `package.json` ทั้งสองฝั่ง และไฟล์ `releases.ts` จะต้องถูกบันทึกและรัน `npm run build && npm run lint` ตรวจสอบร่วมกัน และถูก commit อยู่ใน Commit เดียวกับโค้ดจริงเสมอ (ห้ามปล่อยให้โค้ด commit ขึ้นไปก่อนแล้วมาตามแก้ changelog ทีหลัง)
+1. **Zero-Touch Project Code (MANDATORY & NON-NEGOTIABLE):**
+   - โค้ดโปรเจกต์ของผู้ใช้ที่วางอยู่ใต้ `php/src/<project-name>/` มี Git Repository เป็นของตนเอง
+   - **ห้าม Commit โค้ดใน `php/src/*` เข้า `php-workspace` โดยเด็ดขาด**
+   - ก่อนรัน `git add` ต้องตรวจสอบเสมอว่า `.gitignore` ละเว้น `php/src/*` (ยกเว้น `!php/src/.gitkeep`)
+   - หากตรวจพบว่ามีไฟล์โปรเจกต์ใน `php/src/` ติดสถานะ Staged ให้สั่ง `git reset HEAD php/src/<project>` ทันที
 
-3. **ตรวจสอบและอัปเดตแผนผังสิทธิ์และความสามารถของผู้ใช้งาน (Actor Use Case & Capabilities Matrix):**
-   - วิเคราะห์การเปลี่ยนแปลงในรอบ Commit นั้นในมุมมองของ **Use Case ("ใครทำอะไรได้บ้างในระบบ")**:
-     * **มีความสามารถใหม่ (New Capability / Action):** ที่ผู้ใช้กลุ่มใดกลุ่มหนึ่ง (Super Admin, หัวหน้าฝ่ายฯ, เจ้าหน้าที่, หรือ ผู้ใช้ LINE) ทำได้เพิ่มขึ้นหรือไม่
-     * **มีสิทธิ์ที่ถูกเพิกถอนหรือปิดกั้น (Revoked / Restricted Action):** จากผู้ใช้กลุ่มใดกลุ่มหนึ่งหรือไม่
-     * **มีการสลับหรือเปลี่ยนแปลงระดับสิทธิ์:** ระหว่าง 4 บทบาทหลักในระบบหรือไม่
-   - หากตรวจพบว่ามีผลกระทบต่อ Use Case หรือสิทธิ์ของผู้ใช้งานจริง:
-     * **ต้องเปิดไฟล์ `project-documents/markdown/ตารางวิเคราะห์สิทธิ์และความสามารถของผู้ใช้งาน.md`** เพื่อตรวจสอบและอัปเดตรายการความสามารถ, สิทธิ์ (✅/❌), จุดพิสูจน์บน UI (ปุ่ม/หน้าจอ), และ Endpoint ให้ตรงตาม As-Built จริง
-     * **กฎการสร้างหมวดหมู่ใหม่:** หากมีความสามารถใหม่ที่พัฒนาขึ้น แต่ไม่เข้ากับ 7 หมวดหมู่เดิมที่มีอยู่ **อนุญาตให้สร้างหมวดหมู่ใหม่ (New Module)** ต่อท้ายในตารางได้ โดยตั้งชื่อหมวดหมู่อย่างเป็นทางการและกระชับ
-     * ขออนุมัติแก้ไขไฟล์ตามระเบียบ Write Approval Workflow และบันทึกรวมใน Commit เดียวกัน
-   - *หากเป็นการ Refactor ภายใน, การแก้บั๊กแสดงผล/CSS, หรือ Background Worker ที่ไม่เปลี่ยนความสามารถของผู้ใช้ ให้ข้ามขั้นตอนนี้ได้*
+2. **Push Policy:**
+   - การ Commit และ Tag ให้ทำบนเครื่อง Local เสมอ
+   - **ห้ามรันคำสั่ง `git push` หรือ `git push --tags` โดยพลการ** เว้นแต่ผู้ใช้จะระบุอย่างชัดเจนว่าต้องการให้ Push
 
-4. **ตรวจสอบการทดสอบและ Type Safety ก่อน Commit (Pre-commit Verification):**
-   - **ฝั่ง Frontend (`easybook-app`):** หากมีไฟล์เปลี่ยนแปลง ให้รัน `npm run build && npm run lint` เพื่อการันตี Type Safety และ Linter
-   - **ฝั่ง Backend (`easybook-service`):** หากมีไฟล์เปลี่ยนแปลง ให้รัน `npm run build && npm run lint && npm test`
+---
 
-5. **สร้าง Conventional Commit Message (Strict Mandatory Scope):**
-   - วิเคราะห์เนื้อหาการเปลี่ยนแปลง (Diff / Status)
-   - **บังคับใช้รูปแบบ `<type>(<scope>): <description>` เสมอ (ห้ามละเว้น scope):**
-     - `feat(client-portal): ...`
-     - `fix(auth): ...`
-     - `chore(cleanup): ...`
-     - `chore(assets): ...`
-     - `docs(planning): ...`
+## 📋 Workflow เมื่อผู้ใช้สั่ง `/commit`
 
-6. **ดำเนินการ Commit และติดแท็กเวอร์ชัน (Atomic Git Commit & Semantic Tagging):**
-   - รัน `git add -A` และ `git commit -m "<conventional message>"` ในแต่ละ Repository ที่มีไฟล์เปลี่ยนแปลง
-   - **การติดแท็ก Git (Git Tagging):**
-     * เมื่อมีการขยับเวอร์ชัน (`1.x.y`) จากการปล่อยฟีเจอร์ใหม่ ('ใหม่') หรือปรับปรุง/แก้ไข ('ปรับปรุง'/'แก้ไข') ให้สร้าง Annotated Tag รูปแบบ `v1.x.y` ทันทีหลังการ Commit สำเร็จ:
-       ```bash
-       git tag -a v1.x.y -m "v1.x.y"
-       ```
-     * ดำเนินการติดแท็กในทุก Repository ที่มีการปรับเวอร์ชัน (`easybook-app/` และ `easybook-service/`) ให้ตรงกัน
-     * หากรอบ Commit นั้นไม่มีการขยับเวอร์ชัน (Non-functional / chore) **ไม่ต้องติดแท็ก**
-     * *ข้อควรระวัง:* แท็กจะถูกสร้างบนเครื่อง Local เท่านั้น **ห้ามรันคำสั่ง `git push` หรือ `git push --tags` โดยเด็ดขาด** (การ Push เป็นสิทธิ์ขาดของผู้พัฒนา)
-   - หากไม่มีการเปลี่ยนแปลงใน Repository ใด ให้รายงานว่า Working tree clean
+### 1. สแกนสถานะ Git และตรวจจับความปลอดภัย (Status & Zero-Touch Inspection)
+- รัน `git status` ใน root ของ `php-workspace`
+- ตรวจสอบรายการไฟล์ที่เปลี่ยนแปลง:
+  * หากไม่มีการเปลี่ยนแปลงใดๆ ให้รายงานว่า `Working tree clean` และสิ้นสุดการทำงาน
+  * ตรวจสอบว่าไม่มีไฟล์ภายใต้ `php/src/<project>/` หลุดเข้ามา
 
-7. **สรุปรายงานผล (Commit Report):**
-   - แสดงรายการ Commit Hash, Commit Message, Git Tag (ถ้ามี) และสรุปไฟล์ที่ถูกบันทึกในแต่ละ Repository อย่างชัดเจน
+### 2. ตรวจสอบความถูกต้องของ Infrastructure ก่อน Commit (Pre-commit Verification)
+ก่อนทำการ Commit ต้องทดสอบความถูกต้องของคอนฟิกเสมอ:
+- **Docker Compose Validation:** รันตรวจสอบไวยากรณ์ `docker compose config -q`
+  ```bash
+  wsl bash -lc "cd '/mnt/e/PHP Project Management/php-workspace' && docker compose config -q"
+  ```
+  *(หากเกิด Error ห้าม Commit ให้แจ้งเตือนและแก้ไขคอนฟิกก่อน)*
+- **PHP Syntax Check:** หากมีการแก้ไขไฟล์ PHP ส่วนกลาง (เช่น `php/shim.php`) ให้รันตรวจสอบไวยากรณ์:
+  ```bash
+  php -l php/shim.php
+  ```
+- **Apache Config Check:** หากมีการแก้ไข `php/apache-vhost.conf` ให้ตรวจความเรียบร้อยของคำสั่ง VirtualHost
+
+---
+
+### 3. บันทึก Changelog ต่อเนื่องอัตโนมัติ (Continuous Release Tracking)
+🔴 **กฎเหล็ก CHANGELOG: "ทุกการเปลี่ยนแปลงฟังก์ชัน, คอนฟิก หรือความสามารถของ Workspace ต้องอัปเดต `CHANGELOG.md` เสมอ"**
+
+1. **อ่านเวอร์ชันล่าสุด:** จากหัวข้อบนสุดของ `CHANGELOG.md` (เช่น `[1.0.0]`)
+2. **คำนวณและปรับเปลี่ยนเวอร์ชันอัตโนมัติ (Semantic Versioning):**
+   - **`feat` (เพิ่มเวอร์ชัน PHP ใหม่, เพิ่ม Extension, เพิ่ม Apache feature, หรือเพิ่ม Skill):**
+     * ขยับตำแหน่ง Minor: `1.(x+1).0` (เช่น `1.0.0` $\rightarrow$ `1.1.0`)
+   - **`fix` / `refactor` / `perf` (แก้บั๊กคอนฟิก, ปรับปรุง shim.php, แก้ไขพอร์ต):**
+     * ขยับตำแหน่ง Patch: `1.x.(y+1)` (เช่น `1.0.0` $\rightarrow$ `1.0.1`)
+   - **`docs` / `chore` (แก้ไข README, ปรับ `.gitignore`):**
+     * ไม่ต้องขยับเวอร์ชัน ยกเว้นเป็นการอัปเดตเอกสารรอบใหญ่
+3. **บันทึกลง `CHANGELOG.md`:**
+   - เปิดบล็อกเวอร์ชันใหม่ที่คำนวณได้ (`[x.y.z] - YYYY-MM-DD`)
+   - จัดหมวดหมู่รายการเปลี่ยนแปลงตามมาตรฐาน [Keep a Changelog](https://keepachangelog.com/):
+     * `### Added` (สำหรับฟีเจอร์หรือบริการใหม่)
+     * `### Changed` (สำหรับการปรับเปลี่ยนคอนฟิกหรือการทำงานเดิม)
+     * `### Fixed` (สำหรับการแก้ไขปัญหาหรือบั๊ก)
+
+---
+
+### 4. สร้าง Conventional Commit Message (Strict Mandatory Scope)
+บังคับใช้โครงสร้าง **`<type>(<scope>): <description>`** เสมอ (ห้ามละเว้น scope):
+
+| Scope | บริบทการใช้งาน | ตัวอย่าง |
+| :--- | :--- | :--- |
+| **`docker`** | `docker-compose.yml`, network, ports, volumes, extra_hosts | `feat(docker): add php84 service on port 8427` |
+| **`php`** | Dockerfile, Dockerfile-5.6, PHP extensions, INI settings | `fix(php): resolve debian bullseye archive eol` |
+| **`apache`** | `apache-vhost.conf`, VirtualDocumentRoot, mod_rewrite | `feat(apache): support dynamic *.localhost routing` |
+| **`shim`** | `php/shim.php`, auto_prepend_file, environment patches | `fix(shim): normalize HTTP_HOST port for dev environment` |
+| **`agents`** | `.agents/AGENTS.md`, workspace rules, skills (`check-php`, `commit`) | `feat(agents): adapt commit automation skill` |
+| **`docs`** | `README.md`, `CHANGELOG.md`, เอกสารคู่มือ | `docs(readme): add dual-routing guide and port table` |
+| **`chore`** | `.gitignore`, ไฟล์ config ทั่วไป, จัดระเบียบโฟลเดอร์ | `chore(git): ignore all user project sources in php/src` |
+
+---
+
+### 5. ดำเนินการ Commit และติดแท็กเวอร์ชัน (Atomic Commit & Semantic Tagging)
+1. **Stage ไฟล์ที่เกี่ยวข้อง:**
+   ```bash
+   git add docker-compose.yml php/ .agents/ README.md CHANGELOG.md .gitignore
+   ```
+   *(ตรวจสอบให้แน่ใจว่าไม่มี `php/src/*` ติดเข้ามา)*
+2. **Commit:**
+   ```bash
+   git commit -m "<type>(<scope>): <description>"
+   ```
+3. **Semantic Tagging (เมื่อมีการขยับเวอร์ชัน):**
+   - หากในรอบนี้มีการขยับเวอร์ชันใน `CHANGELOG.md` ให้สร้าง Annotated Tag ทันที:
+     ```bash
+     git tag -a vX.Y.Z -m "vX.Y.Z"
+     ```
+
+---
+
+### 6. สรุปรายงานผล (Commit Report)
+แสดงผลสรุปให้ผู้ใช้ทราบอย่างกระชับ:
+- **Commit Hash & Message:** เช่น `a9d6f65 feat(agents): adapt commit automation skill`
+- **Git Tag:** (เช่น `v1.0.1` ถ้ามี)
+- **Changelog Updated:** สรุปรายการที่บันทึกลง `CHANGELOG.md`
+- **Files Committed:** รายชื่อไฟล์ที่ถูกบันทึกใน Commit นี้
