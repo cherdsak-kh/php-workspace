@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-11-15
+
+### Fixed
+- **Hub Dashboard False Portainer Offline:** Resolved persistent "Portainer Offline" indicator on `php/src/index.php` by testing Portainer connectivity against Docker internal hostnames (`portainer`, `portainer-hub`) and host gateways (`DB`, `host.docker.internal`) rather than container-local `localhost`.
+
 ## [1.2.1] - 2026-11-15
 
 ### Added

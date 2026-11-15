@@ -93,10 +93,14 @@ if ($fp) {
 
 // 3. Portainer Status & Token Loading
 $portainerStatus = false;
-$portainerFp = @fsockopen($currentHost, 9000, $pErrno, $pErrstr, 0.5);
-if ($portainerFp) {
-    $portainerStatus = true;
-    fclose($portainerFp);
+$portainerTargets = ['portainer', 'portainer-hub', 'DB', 'host.docker.internal', '127.0.0.1'];
+foreach ($portainerTargets as $pTarget) {
+    $portainerFp = @fsockopen($pTarget, 9000, $pErrno, $pErrstr, 0.3);
+    if ($portainerFp) {
+        $portainerStatus = true;
+        fclose($portainerFp);
+        break;
+    }
 }
 
 // Read portainer-token.json if available
