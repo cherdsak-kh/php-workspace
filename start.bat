@@ -17,11 +17,26 @@ if errorlevel 1 (
     )
 )
 
-:: Check Python availability (Windows vs WSL)
-set "USE_WSL_PYTHON=0"
-where python >nul 2>&1
-if errorlevel 1 (
-    set "USE_WSL_PYTHON=1"
+:: Check PowerShell availability (native on Windows 10/11)
+set "HAS_POWERSHELL=0"
+where powershell >nul 2>&1
+if not errorlevel 1 set "HAS_POWERSHELL=1"
+
+:: Check Python availability (Windows vs WSL - avoid WindowsApps stub)
+set "PYTHON_CMD="
+python -c "exit(0)" >nul 2>&1
+if not errorlevel 1 (
+    set "PYTHON_CMD=python"
+) else (
+    py -c "exit(0)" >nul 2>&1
+    if not errorlevel 1 (
+        set "PYTHON_CMD=py"
+    ) else (
+        wsl python3 -c "exit(0)" >nul 2>&1
+        if not errorlevel 1 (
+            set "PYTHON_CMD=wsl python3"
+        )
+    )
 )
 
 :menu
@@ -203,7 +218,7 @@ echo Waiting for Portainer to initialize...
 ping 127.0.0.1 -n 3 >nul
 echo.
 echo Initializing Portainer token and credentials...
-call :run_python scripts/setup-portainer.py
+call :setup_portainer
 echo.
 echo [OK] Portainer is running at http://localhost:9000
 echo.
@@ -221,7 +236,7 @@ goto menu
 :setup_token
 echo.
 echo Fetching Portainer Setup Token and API Key...
-call :run_python scripts/setup-portainer.py
+call :setup_portainer
 echo.
 pause
 goto menu
@@ -330,7 +345,7 @@ echo.
 echo Starting portainer...
 call :run_docker compose up -d portainer
 ping 127.0.0.1 -n 3 >nul
-call :run_python scripts/setup-portainer.py
+call :setup_portainer
 
 :do_open_portainer
 echo Opening Portainer in browser...
@@ -421,13 +436,26 @@ if "%USE_WSL%"=="1" (
 )
 exit /b %errorlevel%
 
-:run_python
-if "%USE_WSL_PYTHON%"=="1" (
-    wsl python3 %*
-) else (
-    python %*
+:setup_portainer
+if "%HAS_POWERSHELL%"=="1" (
+    powershell -ExecutionPolicy Bypass -File scripts\setup-portainer.ps1
+    exit /b %errorlevel%
 )
-exit /b %errorlevel%
+if defined PYTHON_CMD (
+    call :run_python scripts/setup-portainer.py
+    exit /b %errorlevel%
+)
+echo [WARNING] Neither PowerShell nor Python was found to run Portainer auto-setup.
+echo           You can access Portainer directly at http://localhost:9000
+exit /b 0
+
+:run_python
+if defined PYTHON_CMD (
+    %PYTHON_CMD% %*
+    exit /b %errorlevel%
+)
+echo [ERROR] Python is not installed or available on this system.
+exit /b 1
 
 :end
 echo Goodbye!

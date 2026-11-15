@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-11-15
+
+### Added
+- **PowerShell-Native Portainer Setup:** Created `scripts/setup-portainer.ps1` to extract setup tokens, initialize admin, and generate API keys natively on Windows without requiring Python.
+
+### Fixed
+- **WindowsApps Python Alias Trap:** Resolved `Python was not found` error in `start.bat` on clean machines without Python by testing execution rather than stub path existence and prioritizing native PowerShell for Portainer operations.
+- **Portainer Setup Hangs & Timeouts:** Added pre-flight container status checks and connection retry loops in both `setup-portainer.ps1` and `setup-portainer.py` to prevent hanging when Portainer is initializing or stopped.
+- **Graceful Shell Fallback:** Updated `start.sh` to gracefully detect missing Python/PowerShell runtimes and output helpful setup notices.
+
 ## [1.2.0] - 2026-11-15
 
 ### Added

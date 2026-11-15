@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import json
+import time
 import uuid
 import subprocess
 import urllib.request
@@ -22,25 +23,50 @@ ADMIN_PASS = os.environ.get("PORTAINER_ADMIN_PASSWORD", "AdminHub@2026!")
 CREDENTIALS_FILE = os.path.join(WORKSPACE_ROOT, "portainer-credentials.txt")
 TOKEN_JSON_FILE = os.path.join(WORKSPACE_ROOT, "php", "src", "portainer-token.json")
 
+def is_portainer_container_running():
+    """Check if portainer-hub container is running."""
+    commands = [
+        ["docker", "ps", "--filter", "name=portainer-hub", "--filter", "status=running", "-q"],
+        ["wsl", "docker", "ps", "--filter", "name=portainer-hub", "--filter", "status=running", "-q"],
+    ]
+    for cmd in commands:
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
+            if res.returncode == 0 and res.stdout.strip():
+                return True
+        except Exception:
+            pass
+    return False
+
 def get_docker_logs():
     """Extract portainer container logs using docker or wsl docker."""
-    # Try local docker first
     try:
-        proc = subprocess.run(["docker", "logs", "portainer-hub"], capture_output=True, text=True, timeout=10)
+        proc = subprocess.run(["docker", "logs", "portainer-hub"], capture_output=True, text=True, timeout=5)
         if proc.returncode == 0:
             return proc.stdout + proc.stderr
     except Exception:
         pass
     
-    # Try wsl docker
     try:
-        proc = subprocess.run(["wsl", "docker", "logs", "portainer-hub"], capture_output=True, text=True, timeout=10)
+        proc = subprocess.run(["wsl", "docker", "logs", "portainer-hub"], capture_output=True, text=True, timeout=5)
         if proc.returncode == 0:
             return proc.stdout + proc.stderr
     except Exception:
         pass
     
     return ""
+
+def restart_portainer():
+    """Restart portainer container using docker or wsl docker."""
+    try:
+        subprocess.run(["docker", "restart", "portainer-hub"], capture_output=True, timeout=10)
+        return
+    except Exception:
+        pass
+    try:
+        subprocess.run(["wsl", "docker", "restart", "portainer-hub"], capture_output=True, timeout=10)
+    except Exception:
+        pass
 
 def extract_setup_token(logs):
     """Find setup_token in container logs."""
@@ -54,7 +80,7 @@ def check_admin_exists():
     url = f"{PORTAINER_URL}/api/users/admin/check"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "PHP-Workspace-Hub"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=3) as resp:
             return resp.status == 204 or resp.status == 200
     except urllib.error.HTTPError as e:
         if e.code == 404:
@@ -146,7 +172,7 @@ def register_local_endpoint(jwt_token):
     try:
         with urllib.request.urlopen(create_req, timeout=10) as resp:
             return True
-    except Exception as e:
+    except Exception:
         return False
 
 def main():
@@ -154,20 +180,41 @@ def main():
     print("      Portainer CE Token & Setup Utility")
     print("=" * 60)
 
-    logs = get_docker_logs()
-    setup_token = extract_setup_token(logs)
-    
-    admin_status = check_admin_exists()
+    # 1. First check if container is running
+    if not is_portainer_container_running():
+        print("[-] Portainer container 'portainer-hub' is currently STOPPED.")
+        print("    Please start Portainer first (Option 5 in launcher).")
+        return
+
+    # 2. Check HTTP status (retry if container just booted up)
+    admin_status = None
+    for attempt in range(5):
+        admin_status = check_admin_exists()
+        if admin_status is not None:
+            break
+        print(f"[*] Waiting for Portainer to initialize at {PORTAINER_URL}...")
+        time.sleep(2)
+
     if admin_status is None:
         print(f"[-] Cannot connect to Portainer at {PORTAINER_URL}")
-        print("    Please start the Portainer container first (Option 5 in launcher).")
+        print("    Container is running, but port 9000 is not responding yet.")
         return
+
+    logs = get_docker_logs()
+    setup_token = extract_setup_token(logs)
 
     jwt_token = ""
     api_key = ""
 
     if admin_status is False:
         print("[*] Portainer admin not initialized yet.")
+        for _ in range(5):
+            if setup_token:
+                break
+            time.sleep(2)
+            logs = get_docker_logs()
+            setup_token = extract_setup_token(logs)
+
         if setup_token:
             print(f"[+] Found Setup Token from container logs: {setup_token[:16]}...")
             print(f"[*] Initializing admin account '{ADMIN_USER}'...")
@@ -178,7 +225,7 @@ def main():
                 print("[-] Could not initialize admin automatically.")
         else:
             print("[-] Setup token not found in logs. Container might have timed out. Restarting...")
-            subprocess.run(["wsl", "docker", "restart", "portainer-hub"], capture_output=True)
+            restart_portainer()
             return
     else:
         print("[+] Admin account is already configured.")
@@ -196,7 +243,17 @@ def main():
         api_key = create_persistent_api_key(jwt_token)
         if api_key:
             print(f"[+] API Key generated: {api_key[:16]}...")
-    
+
+    # Preserve old API key if available
+    if not api_key and os.path.exists(TOKEN_JSON_FILE):
+        try:
+            with open(TOKEN_JSON_FILE, "r", encoding="utf-8") as f:
+                old_data = json.load(f)
+                if old_data.get("api_key"):
+                    api_key = old_data.get("api_key")
+        except Exception:
+            pass
+
     # Save output files
     summary = {
         "portainer_url": PORTAINER_URL,
@@ -207,7 +264,6 @@ def main():
         "jwt_token": jwt_token,
     }
 
-    # Write portainer-credentials.txt
     cred_text = f"""# ========================================================
 # Portainer CE Credentials & Tokens
 # Generated by php-workspace
@@ -231,7 +287,6 @@ Bearer JWT Token:
         f.write(cred_text)
     print(f"\n[OK] Saved credentials to: {CREDENTIALS_FILE}")
 
-    # Write php/src/portainer-token.json
     with open(TOKEN_JSON_FILE, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
     print(f"[OK] Saved token JSON to: {TOKEN_JSON_FILE}")

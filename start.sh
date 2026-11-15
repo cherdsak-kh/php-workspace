@@ -57,6 +57,17 @@ ensure_mysql() {
     fi
 }
 
+setup_portainer() {
+    if command -v python3 >/dev/null 2>&1; then
+        python3 scripts/setup-portainer.py
+    elif command -v pwsh >/dev/null 2>&1; then
+        pwsh -File scripts/setup-portainer.ps1
+    else
+        echo " [!] Notice: Neither python3 nor pwsh was found to auto-setup Portainer tokens."
+        echo "     You can access Portainer directly at http://localhost:9000"
+    fi
+}
+
 ensure_running() {
     local svc="$1"
     local port="$2"
@@ -186,7 +197,7 @@ while true; do
             echo "Starting Portainer..."
             docker compose up -d portainer
             sleep 2
-            python3 scripts/setup-portainer.py 2>/dev/null || true
+            setup_portainer 2>/dev/null || true
             echo "[OK] Portainer running at http://localhost:9000"
             read -rp "Press Enter to continue..."
             ;;
@@ -199,7 +210,7 @@ while true; do
             ;;
         7)
             echo ""
-            python3 scripts/setup-portainer.py
+            setup_portainer
             read -rp "Press Enter to continue..."
             ;;
         8)
@@ -247,7 +258,7 @@ while true; do
             ;;
         11)
             if ensure_running portainer 9000; then
-                python3 scripts/setup-portainer.py 2>/dev/null || true
+                setup_portainer 2>/dev/null || true
                 echo "Opening Portainer UI..."
                 open_url "http://localhost:9000/"
             fi
