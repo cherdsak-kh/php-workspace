@@ -1315,7 +1315,7 @@ foreach ($extensions as $ext) {
                 <h3>No PHP projects found in <code>php/src/</code></h3>
                 <p style="margin-top: 8px;">To add a project, simply clone or place your repository inside the <code>php/src/</code> directory:</p>
                 <div class="code-box">git clone &lt;repo-url&gt; php/src/my-project</div>
-                <p style="font-size: 13px;">Then refresh this page or use the <code>/check-php my-project</code> slash command.</p>
+                <p style="font-size: 13px;">Then refresh this page to view and open your projects.</p>
             </div>
         <?php else: ?>
             <div class="project-grid">

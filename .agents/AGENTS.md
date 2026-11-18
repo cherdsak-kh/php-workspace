@@ -1,6 +1,6 @@
-# AGENTS.md - Antigravity Workspace Guidelines (php-workspace-2)
+# AGENTS.md - Antigravity Workspace Guidelines (php-workspace)
 
-Welcome to **PHP Multi-Version Hub** (`php-workspace-2`).
+Welcome to **PHP Multi-Version Hub** (`php-workspace`).
 This workspace provides a centralized, multi-version PHP environment (PHP 5.6 to 8.5) running side-by-side using Docker Compose. All projects reside in a single shared directory: `php/src/<project-name>/`.
 
 ---
@@ -43,5 +43,3 @@ All containers run simultaneously and mount `./php/src` into `/var/www/html`:
    - Start all containers: `docker compose up -d`
    - Check container status: `docker compose ps`
    - View logs: `docker compose logs -f <service>` (e.g. `docker compose logs -f php74`)
-3. **Assisting with Compatibility & Testing:**
-   - Use the `/check-php <project>` slash command to test project routes and HTTP status across PHP versions.

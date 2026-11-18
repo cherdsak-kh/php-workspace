@@ -87,29 +87,16 @@ Open your browser:
 
 ---
 
-## 🤖 AI Agent Diagnostics & Verification (`/check-php`)
-
-This workspace is integrated with Google Antigravity AI Agent workflows.
-
-When placing a new or existing project in `php/src/`, run:
-```text
-/check-php <project-name> [php-version]
-```
-
-### What `/check-php` does automatically:
-1. **Evaluates Optimal PHP Version:** Analyzes dependencies (Smarty, ADODB, DB drivers, PHP syntax) and recommends the best PHP version.
-2. **Validates Connectivity & Routes:** Tests HTTP status across Subfolder and Domain modes.
-3. **Diagnoses Local Readiness:** Discovers DB name mismatches, path root issues, or missing rewrite rules and proposes exact fixes so the project runs locally out of the box.
-
----
-
 ## 📂 Workspace Structure
 
 ```text
 php-workspace/
 ├── .agents/                    # Antigravity AI agent rules and skills
 │   ├── AGENTS.md               # Workspace guidelines
-│   └── skills/check-php/       # /check-php slash command implementation
+│   ├── rules/                  # Workspace automated rules
+│   └── skills/commit/          # /commit slash command automation
+├── docs/                       # Comprehensive guides & documentation
+│   └── START_BAT_GUIDE.md      # Detailed 15-menu guide for start.bat
 ├── .env.example                # Environment variables template
 ├── docker-compose.yml          # Multi-PHP container orchestration
 ├── scripts/                    # Utilities and automated setup

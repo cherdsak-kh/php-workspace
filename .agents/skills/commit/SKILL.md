@@ -78,7 +78,7 @@ Skill นี้ใช้สำหรับจัดการการตรว�
 | **`php`** | Dockerfile, Dockerfile-5.6, PHP extensions, INI settings | `fix(php): resolve debian bullseye archive eol` |
 | **`apache`** | `apache-vhost.conf`, VirtualDocumentRoot, mod_rewrite | `feat(apache): support dynamic *.localhost routing` |
 | **`shim`** | `php/shim.php`, auto_prepend_file, environment patches | `fix(shim): normalize HTTP_HOST port for dev environment` |
-| **`agents`** | `.agents/AGENTS.md`, workspace rules, skills (`check-php`, `commit`) | `feat(agents): adapt commit automation skill` |
+| **`agents`** | `.agents/AGENTS.md`, workspace rules, skills (`commit`) | `feat(agents): adapt commit automation skill` |
 | **`docs`** | `README.md`, `CHANGELOG.md`, เอกสารคู่มือ | `docs(readme): add dual-routing guide and port table` |
 | **`chore`** | `.gitignore`, ไฟล์ config ทั่วไป, จัดระเบียบโฟลเดอร์ | `chore(git): ignore all user project sources in php/src` |
 
