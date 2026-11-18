@@ -1,23 +1,86 @@
 <?php
 /**
  * PHP Multi-Version Hub - Landing Dashboard
- * Displays workspace health, active PHP runtime, host & Docker environment detection,
- * Portainer credentials/token, and detected projects in php/src/
+ * Displays workspace health, active PHP runtime, real-time status of each PHP version (Online/Offline),
+ * host & Docker environment detection, Portainer credentials/token, and detected projects in php/src/
  */
 
 $currentPort = isset($_SERVER['SERVER_PORT']) ? $_SERVER['SERVER_PORT'] : '80';
 $currentHost = isset($_SERVER['HTTP_HOST']) ? explode(':', $_SERVER['HTTP_HOST'])[0] : 'localhost';
 $phpVersion = PHP_VERSION;
 
+// Lightweight Ping Endpoint for cross-port health check
+if (isset($_GET['ping'])) {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, OPTIONS');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'status' => 'online',
+        'php' => PHP_VERSION,
+        'port' => $currentPort,
+        'time' => microtime(true)
+    ]);
+    exit;
+}
+
 // Port to PHP version mapping
 $phpVersions = [
-    '5640' => ['version' => '5.6.40', 'name' => 'PHP 5.6', 'desc' => 'Legacy projects (mysql ext)'],
-    '7433' => ['version' => '7.4.33', 'name' => 'PHP 7.4', 'desc' => 'Transitional (Smarty 3/4)'],
-    '8131' => ['version' => '8.1.34', 'name' => 'PHP 8.1', 'desc' => 'Early strict types'],
-    '8235' => ['version' => '8.2.35', 'name' => 'PHP 8.2', 'desc' => 'Modern active'],
-    '8336' => ['version' => '8.3.36', 'name' => 'PHP 8.3', 'desc' => 'Standard modern default'],
-    '8427' => ['version' => '8.4.27', 'name' => 'PHP 8.4', 'desc' => 'Latest stable'],
-    '8512' => ['version' => '8.5.12', 'name' => 'PHP 8.5', 'desc' => 'Next-gen experimental'],
+    '5640' => [
+        'service' => 'php56',
+        'version' => '5.6.40',
+        'name' => 'PHP 5.6',
+        'tag' => 'Legacy',
+        'desc' => 'Legacy projects (Debian Stretch archive, mysql ext, Smarty 2)',
+        'badge_color' => '#f59e0b',
+    ],
+    '7433' => [
+        'service' => 'php74',
+        'version' => '7.4.33',
+        'name' => 'PHP 7.4',
+        'tag' => 'Transitional',
+        'desc' => 'Transitional projects (Smarty 3/4, MySQLi, GD, Zip)',
+        'badge_color' => '#38bdf8',
+    ],
+    '8131' => [
+        'service' => 'php81',
+        'version' => '8.1.34',
+        'name' => 'PHP 8.1',
+        'tag' => 'Strict Types',
+        'desc' => 'Early strict types (Enums, Readonly properties, First-class callables)',
+        'badge_color' => '#818cf8',
+    ],
+    '8235' => [
+        'service' => 'php82',
+        'version' => '8.2.35',
+        'name' => 'PHP 8.2',
+        'tag' => 'Stable Active',
+        'desc' => 'Modern stable active runtime (Readonly classes, DNF types)',
+        'badge_color' => '#a855f7',
+    ],
+    '8336' => [
+        'service' => 'php83',
+        'version' => '8.3.36',
+        'name' => 'PHP 8.3',
+        'tag' => 'Default Hub',
+        'desc' => 'Standard modern default runtime',
+        'badge_color' => '#10b981',
+    ],
+    '8427' => [
+        'service' => 'php84',
+        'version' => '8.4.27',
+        'name' => 'PHP 8.4',
+        'tag' => 'Latest Stable',
+        'desc' => 'Latest stable release (Property hooks, Asymmetric visibility)',
+        'badge_color' => '#06b6d4',
+    ],
+    '8512' => [
+        'service' => 'php85',
+        'version' => '8.5.12',
+        'name' => 'PHP 8.5',
+        'tag' => 'Next-Gen Preview',
+        'desc' => 'Next-gen experimental release preview',
+        'badge_color' => '#ec4899',
+    ],
 ];
 
 // 1. Host & Docker Environment Detection
@@ -103,6 +166,19 @@ foreach ($portainerTargets as $pTarget) {
     }
 }
 
+// 3.1 phpMyAdmin Status
+$pmaStatus = false;
+$pmaTargets = ['phpmyadmin', 'pma-hub', 'DB', 'host.docker.internal', '127.0.0.1'];
+foreach ($pmaTargets as $pmaTarget) {
+    $pmaPort = ($pmaTarget === 'phpmyadmin' || $pmaTarget === 'pma-hub') ? 80 : 8081;
+    $pmaFp = @fsockopen($pmaTarget, $pmaPort, $pErrno, $pErrstr, 0.2);
+    if ($pmaFp) {
+        $pmaStatus = true;
+        fclose($pmaFp);
+        break;
+    }
+}
+
 // Read portainer-token.json if available
 $portainerData = null;
 $tokenFile = __DIR__ . '/portainer-token.json';
@@ -179,9 +255,9 @@ foreach ($extensions as $ext) {
             align-items: center;
             flex-wrap: wrap;
             gap: 16px;
-            padding-bottom: 24px;
+            padding-bottom: 20px;
             border-bottom: 1px solid var(--border);
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         .brand { display: flex; align-items: center; gap: 12px; }
         .brand h1 { font-size: 24px; font-weight: 700; color: #fff; }
@@ -227,34 +303,316 @@ foreach ($extensions as $ext) {
             color: #fff;
             box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
         }
+
+        /* Top Version Navigation Bar */
         .version-nav {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
             gap: 8px;
             background: var(--surface);
             padding: 8px;
             border-radius: 12px;
             border: 1px solid var(--border);
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
-        .version-nav a {
+        .nav-tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             color: var(--text-muted);
             text-decoration: none;
-            padding: 6px 14px;
+            padding: 8px 6px;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 500;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
             transition: all 0.2s;
+            white-space: nowrap;
         }
-        .version-nav a:hover {
+        @media (max-width: 1080px) {
+            .version-nav {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        @media (max-width: 640px) {
+            .version-nav {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .nav-tab:hover {
             color: #fff;
             background: var(--surface-hover);
+            border-color: var(--border);
         }
-        .version-nav a.active {
-            background: var(--primary);
-            color: #0f172a;
+        .nav-tab.active {
+            background: #0284c7;
+            color: #fff;
             font-weight: 700;
+            border-color: var(--primary);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
         }
+        .nav-tab .nav-port {
+            font-size: 11px;
+            opacity: 0.75;
+            font-family: monospace;
+        }
+
+        /* Status Dot Indicator */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse-green 2s infinite;
+        }
+        .status-dot.offline {
+            background: var(--danger);
+            box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+        }
+        .status-dot.checking {
+            background: var(--warning);
+            box-shadow: 0 0 6px var(--warning);
+            animation: pulse-orange 1s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes pulse-orange {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* Status Badges */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-status.online {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .badge-status.offline {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+        .badge-status.checking {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+        .badge-status-subtle {
+            font-size: 12px;
+            color: #94a3b8;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: inline-block;
+        }
+
+        /* =========================================================================
+           Accordion Component for PHP Runtimes Status Matrix
+           ========================================================================= */
+        details.runtimes-accordion {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        details.runtimes-accordion[open] {
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+        summary.accordion-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            cursor: pointer;
+            user-select: none;
+            list-style: none;
+            background: rgba(255, 255, 255, 0.02);
+            transition: background 0.2s ease;
+            gap: 16px;
+        }
+        summary.accordion-summary::-webkit-details-marker {
+            display: none;
+        }
+        summary.accordion-summary:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .summary-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .chevron-icon {
+            color: var(--primary);
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+        details[open] .chevron-icon {
+            transform: rotate(180deg);
+        }
+        .summary-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .summary-title-group h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+        .summary-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .accordion-body {
+            padding: 0 20px 20px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .runtimes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .runtime-row {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            transition: all 0.2s ease;
+        }
+        .runtime-row:hover {
+            border-color: rgba(56, 189, 248, 0.35);
+            background: rgba(15, 23, 42, 0.85);
+        }
+        .runtime-row.is-current {
+            border-color: #0284c7;
+            background: linear-gradient(90deg, rgba(2, 132, 199, 0.15), rgba(15, 23, 42, 0.7));
+            box-shadow: 0 0 12px rgba(2, 132, 199, 0.15);
+        }
+        .row-main {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1;
+            min-width: 0;
+        }
+        .row-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .runtime-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .runtime-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .runtime-port-badge {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--primary);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .row-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .row-desc code {
+            color: #38bdf8;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        .row-side {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 860px) {
+            .runtime-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .row-main {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                width: 100%;
+            }
+            .row-desc {
+                white-space: normal;
+            }
+            .row-side {
+                width: 100%;
+                justify-content: space-between;
+                border-top: 1px dashed rgba(255, 255, 255, 0.06);
+                padding-top: 8px;
+            }
+        }
+
+        /* Health & Stats Grid */
         .grid-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -284,14 +642,6 @@ foreach ($extensions as $ext) {
             align-items: center;
             gap: 8px;
         }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .status-dot.online { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .status-dot.offline { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
         .pill-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
         .pill {
             font-size: 11px;
@@ -356,13 +706,14 @@ foreach ($extensions as $ext) {
             color: #0f172a;
         }
         
+        /* Projects Grid */
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
         }
-        .section-header h2 { font-size: 18px; font-weight: 600; }
+        .section-header h2 { font-size: 18px; font-weight: 600; color: #fff; }
         .project-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -392,7 +743,49 @@ foreach ($extensions as $ext) {
         .project-meta {
             font-size: 12px;
             color: var(--text-muted);
-            margin-bottom: 16px;
+            margin-bottom: 14px;
+        }
+        .project-version-control {
+            margin-bottom: 14px;
+            background: rgba(15, 23, 42, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+        .control-label svg {
+            color: var(--primary);
+        }
+        .version-select {
+            width: 100%;
+            background: #0f172a;
+            color: #e2e8f0;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .version-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+        }
+        .version-select option {
+            background: #1e293b;
+            color: #f1f5f9;
         }
         .btn-group {
             display: flex;
@@ -411,10 +804,11 @@ foreach ($extensions as $ext) {
             transition: all 0.2s;
             cursor: pointer;
             border: none;
+            gap: 6px;
         }
         .btn-primary { background: #0284c7; color: #fff; }
         .btn-primary:hover { background: var(--primary-hover); }
-        .btn-secondary { background: var(--surface-hover); color: var(--text); }
+        .btn-secondary { background: var(--surface-hover); color: var(--text); border: 1px solid var(--border); }
         .btn-secondary:hover { background: #475569; color: #fff; }
         .btn-admin { background: #334155; color: #38bdf8; border: 1px solid #0284c7; }
         .btn-admin:hover { background: #0284c7; color: #fff; }
@@ -436,19 +830,132 @@ foreach ($extensions as $ext) {
             margin: 16px auto;
             display: inline-block;
         }
+        /* =========================================================================
+           Modern Hub Footer
+           ========================================================================= */
         footer {
-            margin-top: 48px;
-            padding-top: 24px;
+            margin-top: 56px;
+            padding-top: 36px;
             border-top: 1px solid var(--border);
-            text-align: center;
-            font-size: 13px;
             color: var(--text-muted);
+            font-size: 13px;
         }
-        footer a { color: var(--primary); text-decoration: none; }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 48px;
+            margin-bottom: 32px;
+        }
+        @media (max-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+        }
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .footer-desc {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin: 0;
+        }
+        .footer-status-pills {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .f-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        .footer-heading {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 0 4px 0;
+        }
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .footer-links li a,
+        .footer-links li span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.15s ease;
+        }
+        .footer-links li a:hover {
+            color: var(--primary);
+        }
+        .f-icon {
+            font-size: 14px;
+        }
+        .f-port {
+            font-family: monospace;
+            font-size: 11px;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--primary);
+            padding: 1px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .footer-bottom {
+            padding: 20px 0 10px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 12px;
+        }
+        .footer-bottom strong {
+            color: #f1f5f9;
+        }
+        .footer-bottom code {
+            color: #38bdf8;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <header>
             <div class="brand">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -472,14 +979,95 @@ foreach ($extensions as $ext) {
             </div>
         </header>
 
-        <!-- PHP Version Switcher -->
+        <!-- PHP Version Switcher (Top Bar) -->
         <div class="version-nav">
-            <?php foreach ($phpVersions as $p => $info): ?>
-                <a href="http://<?= htmlspecialchars($currentHost) ?>:<?= $p ?>/" class="<?= ($currentPort == $p) ? 'active' : '' ?>" title="<?= htmlspecialchars($info['desc']) ?>">
-                    <?= htmlspecialchars($info['name']) ?>
+            <?php foreach ($phpVersions as $p => $info): 
+                $isCurrent = ($currentPort == $p);
+            ?>
+                <a href="http://<?= htmlspecialchars($currentHost) ?>:<?= $p ?>/" 
+                   id="nav-link-<?= $p ?>" 
+                   class="nav-tab <?= $isCurrent ? 'active' : '' ?>" 
+                   title="<?= htmlspecialchars($info['desc']) ?>">
+                    <span class="status-dot <?= $isCurrent ? 'online' : 'checking' ?>" id="nav-dot-<?= $p ?>"></span>
+                    <span class="nav-name"><?= htmlspecialchars($info['name']) ?></span>
+                    <span class="nav-port">:<?= $p ?></span>
                 </a>
             <?php endforeach; ?>
         </div>
+
+        <!-- Real-time PHP Runtimes Status Matrix (Accordion) -->
+        <details class="runtimes-accordion" id="runtimes-accordion">
+            <summary class="accordion-summary">
+                <div class="summary-left">
+                    <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                    <div class="summary-title-group">
+                        <h2>สถานะ PHP Runtimes (Version Status Matrix)</h2>
+                        <div class="summary-badges">
+                            <span class="badge-status online" id="sum-badge-online">
+                                <span class="status-dot online"></span>
+                                <span id="sum-online-text">... เปิดอยู่</span>
+                            </span>
+                            <span class="badge-status offline" id="sum-badge-offline">
+                                <span class="status-dot offline"></span>
+                                <span id="sum-offline-text">... ปิดอยู่</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-right">
+                    <button id="btn-refresh-status" class="btn btn-secondary btn-sm" onclick="event.preventDefault(); checkAllPhpVersions(true);" title="ตรวจสอบสถานะพอร์ตทั้งหมดอีกครั้ง">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                        </svg>
+                        <span>รีเฟรชสถานะ</span>
+                    </button>
+                </div>
+            </summary>
+
+            <div class="accordion-body">
+                <div class="runtimes-list">
+                    <?php foreach ($phpVersions as $p => $info): 
+                        $isCurrent = ($currentPort == $p);
+                    ?>
+                        <div class="runtime-row <?= $isCurrent ? 'is-current' : '' ?>" id="card-runtime-<?= $p ?>">
+                            <div class="row-main">
+                                <span class="status-dot <?= $isCurrent ? 'online' : 'checking' ?>" id="row-dot-<?= $p ?>"></span>
+                                <div class="row-title">
+                                    <span class="runtime-tag" style="background: <?= $info['badge_color'] ?>22; color: <?= $info['badge_color'] ?>; border: 1px solid <?= $info['badge_color'] ?>44;">
+                                        <?= htmlspecialchars($info['tag']) ?>
+                                    </span>
+                                    <strong class="runtime-name"><?= htmlspecialchars($info['name']) ?></strong>
+                                    <span class="runtime-port-badge">:<?= $p ?><?= !empty($info['alt_port']) ? " / :{$info['alt_port']}" : '' ?></span>
+                                </div>
+                                <div class="row-desc">
+                                    <span class="meta-label">Version:</span> <code><?= htmlspecialchars($info['version']) ?></code>
+                                    &bull; <span class="meta-label">Service:</span> <code><?= htmlspecialchars($info['service']) ?></code>
+                                    &bull; <span><?= htmlspecialchars($info['desc']) ?></span>
+                                </div>
+                            </div>
+
+                            <div class="row-side">
+                                <div class="runtime-status-badge" id="card-badge-<?= $p ?>">
+                                    <?php if ($isCurrent): ?>
+                                        <span class="badge-status online">
+                                            <span class="status-dot online"></span>
+                                            <span>เปิดอยู่ (Active)</span>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge-status checking">
+                                            <span class="status-dot checking"></span>
+                                            <span>กำลังตรวจ...</span>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </details>
 
         <!-- Health & Stats Panel -->
         <div class="grid-stats">
@@ -552,7 +1140,7 @@ foreach ($extensions as $ext) {
                         <span style="font-size: 18px;">🐳</span>
                         <div>
                             <strong style="color: #fff; font-size: 15px;">Portainer Credentials &amp; Tokens (Auto-Extracted)</strong>
-                            <div style="font-size: 12px; color: var(--text-muted);">Saved in <code>portainer-credentials.txt</code> &bull; No docker exec needed!</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Saved in <code>portainer-token.json</code> &bull; No docker exec needed!</div>
                         </div>
                     </div>
                     <a href="http://<?= htmlspecialchars($currentHost) ?>:9000/" target="_blank" class="btn btn-primary" style="padding: 6px 14px; font-size: 12px;">
@@ -608,12 +1196,11 @@ foreach ($extensions as $ext) {
         <?php else: ?>
             <div class="project-grid">
                 <?php foreach ($projects as $proj): 
-                    $subfolderUrl = '/' . urlencode($proj['name']) . '/';
-                    $domainUrl = 'http://' . htmlencode($proj['name']) . '.localhost:' . $currentPort . '/';
-                    $subfolderWeadmin = '/' . urlencode($proj['name']) . '/weadmin/';
-                    $domainWeadmin = 'http://' . htmlencode($proj['name']) . '.localhost:' . $currentPort . '/weadmin/';
+                    $safeProjName = htmlencode($proj['name']);
+                    $initialUrl = 'http://' . htmlspecialchars($currentHost) . ':' . $currentPort . '/' . rawurlencode($proj['name']) . '/';
+                    $initialWeadminUrl = 'http://' . htmlspecialchars($currentHost) . ':' . $currentPort . '/' . rawurlencode($proj['name']) . '/weadmin/';
                 ?>
-                    <div class="project-card">
+                    <div class="project-card" data-project="<?= $safeProjName ?>">
                         <div>
                             <div class="project-name"><?= htmlspecialchars($proj['name']) ?></div>
                             <div class="project-meta">
@@ -621,15 +1208,26 @@ foreach ($extensions as $ext) {
                                 <?php if ($proj['hasWeadmin']): ?> &bull; <span style="color: var(--primary);">Has weadmin</span><?php endif; ?>
                             </div>
                         </div>
+
+                        <div class="project-version-control">
+                            <label class="control-label" for="select-version-<?= $safeProjName ?>">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="4 17 10 11 4 5"></polyline>
+                                    <line x1="12" y1="19" x2="20" y2="19"></line>
+                                </svg>
+                                <span>เลือก PHP Version:</span>
+                            </label>
+                            <select class="version-select" id="select-version-<?= $safeProjName ?>" data-project="<?= $safeProjName ?>" onchange="onProjectVersionChange(this)">
+                                <option value="<?= $currentPort ?>"><?= htmlspecialchars($phpVersions[$currentPort]['name']) ?> (:<?= $currentPort ?>) - ปัจจุบัน</option>
+                            </select>
+                        </div>
+
                         <div class="btn-group">
-                            <a href="<?= $subfolderUrl ?>" class="btn btn-primary" target="_blank">
-                                Open Subfolder Mode &rarr;
-                            </a>
-                            <a href="<?= $domainUrl ?>" class="btn btn-secondary" target="_blank" title="Dynamic root mapping (*.localhost)">
-                                Open Root Domain Mode &rarr;
+                            <a href="<?= $initialUrl ?>" id="btn-website-<?= $safeProjName ?>" class="btn btn-primary btn-open-website" target="_blank">
+                                Open Website &rarr;
                             </a>
                             <?php if ($proj['hasWeadmin']): ?>
-                                <a href="<?= $subfolderWeadmin ?>" class="btn btn-admin" target="_blank">
+                                <a href="<?= $initialWeadminUrl ?>" id="btn-weadmin-<?= $safeProjName ?>" class="btn btn-admin btn-open-weadmin" target="_blank">
                                     Open Admin Panel (/weadmin) &rarr;
                                 </a>
                             <?php endif; ?>
@@ -640,12 +1238,70 @@ foreach ($extensions as $ext) {
         <?php endif; ?>
 
         <footer>
-            <p>PHP Multi-Version Workspace &bull; Antigravity AI Agent Hub</p>
-            <p style="margin-top: 4px;">Run <code>/check-php &lt;project&gt; [version]</code> to test compatibility and diagnose local readiness.</p>
+            <div class="footer-grid">
+                <!-- Col 1: Brand & Workspace Info -->
+                <div class="footer-col">
+                    <div class="footer-brand">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        <span>PHP Multi-Version Hub</span>
+                    </div>
+                    <p class="footer-desc">
+                        High-performance isolated development workspace supporting PHP 5.6 through 8.5 with shared workspace source and unified database services.
+                    </p>
+                    <div class="footer-status-pills">
+                        <span class="f-pill"><span class="status-dot online"></span> PHP <?= htmlspecialchars($phpVersion) ?></span>
+                        <span class="f-pill">Port <?= htmlspecialchars($currentPort) ?></span>
+                        <span class="f-pill"><?= htmlspecialchars($hostEnv['badge']) ?></span>
+                    </div>
+                </div>
+
+                <!-- Col 2: Infrastructure & Services -->
+                <div class="footer-col">
+                    <h4 class="footer-heading">Infrastructure &amp; Services</h4>
+                    <ul class="footer-links">
+                        <li>
+                            <a href="http://<?= htmlspecialchars($currentHost) ?>:9000/" target="_blank">
+                                <span class="status-dot <?= $portainerStatus ? 'online' : 'offline' ?>" id="footer-dot-portainer"></span>
+                                <span class="f-icon">🐳</span> Portainer Web UI <span class="f-port">:9000</span>
+                                <span class="badge-status <?= $portainerStatus ? 'online' : 'offline' ?>" style="font-size: 11px; padding: 1px 7px;" id="footer-tag-portainer">
+                                    <?= $portainerStatus ? 'เปิดอยู่' : 'ปิดอยู่' ?>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="http://<?= htmlspecialchars($currentHost) ?>:8081/" target="_blank">
+                                <span class="status-dot <?= $pmaStatus ? 'online' : 'offline' ?>" id="footer-dot-pma"></span>
+                                <span class="f-icon">🗄️</span> phpMyAdmin <span class="f-port">:8081</span>
+                                <span class="badge-status <?= $pmaStatus ? 'online' : 'offline' ?>" style="font-size: 11px; padding: 1px 7px;" id="footer-tag-pma">
+                                    <?= $pmaStatus ? 'เปิดอยู่' : 'ปิดอยู่' ?>
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="footer-copy">
+                    &copy; <?= date('Y') ?> <strong>PHP Multi-Version Workspace</strong> &bull; Zero-Touch Architecture &bull; Powered by Cherdsak Kh.
+                </div>
+                <div class="footer-meta">
+                    <span>Repo: <code>cherdsak-kh/php-workspace</code></span>
+                </div>
+            </div>
         </footer>
     </div>
 
     <script>
+        const phpVersions = <?= json_encode($phpVersions) ?>;
+        const currentPort = <?= json_encode((string)$currentPort) ?>;
+        const host = window.location.hostname || 'localhost';
+        const liveStatus = {};
+
         function copyText(text, btn) {
             if (!text) return;
             navigator.clipboard.writeText(text).then(function() {
@@ -660,6 +1316,288 @@ foreach ($extensions as $ext) {
                 }, 1500);
             });
         }
+
+        // Check single PHP version container status
+        async function checkSinglePhp(port, info) {
+            // Current active runtime is always online
+            if (port === currentPort) {
+                applyStatus(port, true, '0ms', true);
+                return;
+            }
+
+            const startTime = performance.now();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+            try {
+                const response = await fetch(`http://${host}:${port}/?ping=1`, {
+                    mode: 'cors',
+                    cache: 'no-store',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const latency = Math.round(performance.now() - startTime);
+                    applyStatus(port, true, `${latency}ms`, false);
+                } else {
+                    applyStatus(port, false, null, false);
+                }
+            } catch (err) {
+                // Fallback attempt with no-cors probe
+                try {
+                    const fbController = new AbortController();
+                    const fbTimeout = setTimeout(() => fbController.abort(), 800);
+                    await fetch(`http://${host}:${port}/?ping=1`, {
+                        mode: 'no-cors',
+                        cache: 'no-store',
+                        signal: fbController.signal
+                    });
+                    clearTimeout(fbTimeout);
+                    const latency = Math.round(performance.now() - startTime);
+                    applyStatus(port, true, `${latency}ms`, false);
+                } catch (e) {
+                    applyStatus(port, false, null, false);
+                }
+            }
+        }
+
+        function updateSummaryCounters() {
+            let online = 0;
+            let offline = 0;
+            for (const p of Object.keys(phpVersions)) {
+                if (liveStatus[p] === true) {
+                    online++;
+                } else if (liveStatus[p] === false) {
+                    offline++;
+                }
+            }
+            const onlineText = document.getElementById('sum-online-text');
+            const offlineText = document.getElementById('sum-offline-text');
+            if (onlineText) onlineText.innerText = `${online} เปิดอยู่`;
+            if (offlineText) offlineText.innerText = `${offline} ปิดอยู่`;
+        }
+
+        function applyStatus(port, isOnline, latency, isCurrent) {
+            liveStatus[port] = isOnline;
+
+            const navDot = document.getElementById(`nav-dot-${port}`);
+            const rowDot = document.getElementById(`row-dot-${port}`);
+            const cardBadge = document.getElementById(`card-badge-${port}`);
+
+            if (isOnline) {
+                // Top Nav Dot
+                if (navDot) navDot.className = 'status-dot online';
+
+                // Accordion Row Badge
+                if (rowDot) rowDot.className = 'status-dot online';
+                if (cardBadge) {
+                    const latText = latency ? ` &bull; ${latency}` : '';
+                    cardBadge.innerHTML = `
+                        <span class="badge-status online">
+                            <span class="status-dot online"></span>
+                            <span>เปิดอยู่${latText}</span>
+                        </span>
+                    `;
+                }
+            } else {
+                // Top Nav Dot
+                if (navDot) navDot.className = 'status-dot offline';
+
+                // Accordion Row Badge
+                if (rowDot) rowDot.className = 'status-dot offline';
+                if (cardBadge) {
+                    cardBadge.innerHTML = `
+                        <span class="badge-status offline">
+                            <span class="status-dot offline"></span>
+                            <span>ปิดอยู่</span>
+                        </span>
+                    `;
+                }
+            }
+
+            updateSummaryCounters();
+            scheduleUpdateSelects();
+        }
+
+        let updateSelectsTimeout = null;
+        function scheduleUpdateSelects() {
+            clearTimeout(updateSelectsTimeout);
+            updateSelectsTimeout = setTimeout(updateAllProjectVersionSelects, 60);
+        }
+
+        function getOnlinePorts() {
+            const ports = [];
+            for (const p of Object.keys(phpVersions)) {
+                if (p === currentPort || liveStatus[p] === true) {
+                    ports.push(p);
+                }
+            }
+            return ports;
+        }
+
+        function updateCardButtons(card, projName, port) {
+            if (!card) return;
+            const btnWebsite = card.querySelector('.btn-open-website');
+            const btnWeadmin = card.querySelector('.btn-open-weadmin');
+
+            if (!port) {
+                if (btnWebsite) {
+                    btnWebsite.removeAttribute('href');
+                    btnWebsite.style.opacity = '0.5';
+                    btnWebsite.style.pointerEvents = 'none';
+                }
+                if (btnWeadmin) {
+                    btnWeadmin.removeAttribute('href');
+                    btnWeadmin.style.opacity = '0.5';
+                    btnWeadmin.style.pointerEvents = 'none';
+                }
+                return;
+            }
+
+            const targetUrl = `http://${host}:${port}/${encodeURIComponent(projName)}/`;
+            const targetWeadmin = `http://${host}:${port}/${encodeURIComponent(projName)}/weadmin/`;
+
+            if (btnWebsite) {
+                btnWebsite.href = targetUrl;
+                btnWebsite.style.opacity = '';
+                btnWebsite.style.pointerEvents = '';
+            }
+            if (btnWeadmin) {
+                btnWeadmin.href = targetWeadmin;
+                btnWeadmin.style.opacity = '';
+                btnWeadmin.style.pointerEvents = '';
+            }
+        }
+
+        function updateAllProjectVersionSelects() {
+            const cards = document.querySelectorAll('.project-card');
+            const onlinePorts = getOnlinePorts();
+
+            cards.forEach(card => {
+                const select = card.querySelector('.version-select');
+                if (!select) return;
+
+                const projName = select.dataset.project;
+                const prevSelected = select.value || currentPort;
+
+                // Repopulate options with only online versions
+                select.innerHTML = '';
+
+                if (onlinePorts.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'ไม่มีเวอร์ชันที่เปิดอยู่';
+                    opt.disabled = true;
+                    opt.selected = true;
+                    select.appendChild(opt);
+                    updateCardButtons(card, projName, null);
+                    return;
+                }
+
+                let isSelectedStillOnline = false;
+                onlinePorts.forEach(p => {
+                    const info = phpVersions[p];
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    const isCur = (p === currentPort);
+                    opt.textContent = `${info.name} (:${p})${isCur ? ' - ปัจจุบัน' : ''}`;
+                    if (p === prevSelected) {
+                        opt.selected = true;
+                        isSelectedStillOnline = true;
+                    }
+                    select.appendChild(opt);
+                });
+
+                if (!isSelectedStillOnline) {
+                    const fallback = onlinePorts.includes(currentPort) ? currentPort : onlinePorts[0];
+                    select.value = fallback;
+                }
+
+                updateCardButtons(card, projName, select.value);
+            });
+        }
+
+        function onProjectVersionChange(select) {
+            const card = select.closest('.project-card');
+            const projName = select.dataset.project;
+            updateCardButtons(card, projName, select.value);
+        }
+
+        // Check Infrastructure Services (Portainer :9000, phpMyAdmin :8081)
+        async function checkInfrastructureStatus() {
+            // Portainer
+            try {
+                const c1 = new AbortController();
+                const t1 = setTimeout(() => c1.abort(), 1200);
+                await fetch(`http://${host}:9000/`, { mode: 'no-cors', cache: 'no-store', signal: c1.signal });
+                clearTimeout(t1);
+                applyToolStatus('portainer', true);
+            } catch (e) {
+                applyToolStatus('portainer', false);
+            }
+
+            // phpMyAdmin
+            try {
+                const c2 = new AbortController();
+                const t2 = setTimeout(() => c2.abort(), 1200);
+                await fetch(`http://${host}:8081/`, { mode: 'no-cors', cache: 'no-store', signal: c2.signal });
+                clearTimeout(t2);
+                applyToolStatus('pma', true);
+            } catch (e) {
+                applyToolStatus('pma', false);
+            }
+        }
+
+        function applyToolStatus(tool, isOnline) {
+            const dot = document.getElementById(`footer-dot-${tool}`);
+            const tag = document.getElementById(`footer-tag-${tool}`);
+            if (dot) dot.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
+            if (tag) {
+                tag.className = `badge-status ${isOnline ? 'online' : 'offline'}`;
+                tag.innerText = isOnline ? 'เปิดอยู่' : 'ปิดอยู่';
+            }
+        }
+
+        // Check all versions
+        function checkAllPhpVersions(showLoading = false) {
+            const btn = document.getElementById('btn-refresh-status');
+            if (btn && showLoading) {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+                btn.innerHTML = '<span>กำลังตรวจ...</span>';
+            }
+
+            checkInfrastructureStatus();
+
+            const promises = Object.keys(phpVersions).map(port => {
+                return checkSinglePhp(port, phpVersions[port]);
+            });
+
+            Promise.allSettled(promises).then(() => {
+                updateSummaryCounters();
+                updateAllProjectVersionSelects();
+                if (btn && showLoading) {
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.innerHTML = `
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                            </svg>
+                            <span>รีเฟรชสถานะ</span>
+                        `;
+                    }, 400);
+                }
+            });
+        }
+
+        // Run immediately on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateAllProjectVersionSelects();
+            checkAllPhpVersions(false);
+            checkInfrastructureStatus();
+        });
     </script>
 </body>
 </html>

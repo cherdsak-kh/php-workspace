@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-18
+
+### Added
+- **Real-Time Multi-PHP Health & Status Monitoring:** Added client-side asynchronous health checks on `php/src/index.php` that test and display live Online/Offline status dots, latency, and badge indicators for all 7 PHP runtimes (PHP 5.6 to 8.5).
+- **Lightweight Cross-Port Ping Endpoint:** Implemented `?ping` query parameter endpoint in `php/src/index.php` returning JSON runtime metadata with permissive CORS headers.
+- **Dynamic Project Runtime Selector:** Added per-project PHP version dropdown in project cards, allowing direct navigation to any currently online PHP runtime in either Subfolder or Root Domain (`*.localhost`) mode.
+- **Live Infrastructure Status:** Real-time health indicators for Portainer (:9000) and phpMyAdmin (:8081).
+- **Manual Status Refresh:** Added dedicated "รีเฟรชสถานะ" button to re-scan all services on demand.
+
+### Changed
+- **Modernized Hub Dashboard UI:** Overhauled CSS layout with status summary counters, responsive cards, era-specific color badges, and active runtime highlights.
+
 ## [1.2.2] - 2026-11-15
 
 ### Fixed
