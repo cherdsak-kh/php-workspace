@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-11-18
+
+### Added
+- **`start.bat` Comprehensive Documentation:** Created `docs/START_BAT_GUIDE.md` detailing all 15 interactive launcher menus, environment auto-detection (WSL2 vs Native), and Portainer token management.
+- **In-Dashboard Launcher Quick Guide:** Added an interactive cheatsheet accordion to `php/src/index.php` outlining launcher commands by category with direct links to the full guide.
+
+### Fixed
+- **Dead Link Navigation to Offline Services:** Prevented browser connection errors by disabling click actions (`is-offline`, `btn-disabled`, `f-link-disabled`), stripping active links, and attaching descriptive tooltips when PHP runtimes, Portainer, or phpMyAdmin are offline.
+
 ## [1.3.0] - 2026-11-18
 
 ### Added

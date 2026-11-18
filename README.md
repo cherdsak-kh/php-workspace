@@ -49,7 +49,7 @@ cp .env.example .env
 ### Step 2: Start Containers
 
 #### Option A: Using One-Click Launcher
-- **Windows:** Double-click or run `start.bat`
+- **Windows:** Double-click or run `start.bat` *(ดูคู่มือการใช้งาน 15 คำสั่งแบบละเอียดได้ที่ [START_BAT_GUIDE.md](docs/START_BAT_GUIDE.md))*
 - **Linux / macOS / WSL:** Run `./start.sh`
 
 #### Option B: Using Docker Compose CLI

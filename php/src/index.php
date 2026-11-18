@@ -353,6 +353,24 @@ foreach ($extensions as $ext) {
             border-color: var(--primary);
             box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
         }
+        .nav-tab.is-offline {
+            opacity: 0.45;
+            cursor: not-allowed !important;
+            filter: grayscale(0.7);
+        }
+        .nav-tab.is-offline:hover {
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.03);
+            border-color: transparent;
+        }
+        .btn.disabled,
+        .btn:disabled,
+        .btn-disabled,
+        .f-link-disabled {
+            opacity: 0.45 !important;
+            cursor: not-allowed !important;
+            filter: grayscale(0.7);
+        }
         .nav-tab .nav-port {
             font-size: 11px;
             opacity: 0.75;
@@ -610,6 +628,58 @@ foreach ($extensions as $ext) {
                 border-top: 1px dashed rgba(255, 255, 255, 0.06);
                 padding-top: 8px;
             }
+        }
+
+        /* Guide Accordion Styling */
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .guide-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+        .guide-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .guide-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .guide-list code {
+            color: #38bdf8;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        .guide-list strong {
+            color: #e2e8f0;
+        }
+        .guide-footer-tip {
+            margin-top: 16px;
+            background: rgba(2, 132, 199, 0.1);
+            border: 1px solid rgba(2, 132, 199, 0.25);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #bae6fd;
+            line-height: 1.5;
         }
 
         /* Health & Stats Grid */
@@ -972,7 +1042,7 @@ foreach ($extensions as $ext) {
                 <span class="badge-env" title="<?= htmlspecialchars($hostEnv['detail']) ?>">
                     💻 <?= htmlspecialchars($hostEnv['badge']) ?>
                 </span>
-                <a href="http://<?= htmlspecialchars($currentHost) ?>:9000/" target="_blank" class="btn-portainer" title="Manage containers, view logs, inspect stats">
+                <a href="http://<?= htmlspecialchars($currentHost) ?>:9000/" target="_blank" class="btn-portainer <?= $portainerStatus ? '' : 'btn-disabled' ?>" id="header-btn-portainer" title="<?= $portainerStatus ? 'Manage containers, view logs, inspect stats' : 'Portainer ปิดอยู่ (กรุณาเปิดผ่าน start.bat)' ?>">
                     🐳 Container Manager (Portainer)
                 </a>
                 <span class="badge-php">Current: PHP <?= htmlspecialchars($phpVersion) ?> (Port <?= htmlspecialchars($currentPort) ?>)</span>
@@ -1039,7 +1109,7 @@ foreach ($extensions as $ext) {
                                         <?= htmlspecialchars($info['tag']) ?>
                                     </span>
                                     <strong class="runtime-name"><?= htmlspecialchars($info['name']) ?></strong>
-                                    <span class="runtime-port-badge">:<?= $p ?><?= !empty($info['alt_port']) ? " / :{$info['alt_port']}" : '' ?></span>
+                                    <span class="runtime-port-badge">:<?= $p ?></span>
                                 </div>
                                 <div class="row-desc">
                                     <span class="meta-label">Version:</span> <code><?= htmlspecialchars($info['version']) ?></code>
@@ -1065,6 +1135,60 @@ foreach ($extensions as $ext) {
                             </div>
                         </div>
                     <?php endforeach; ?>
+                </div>
+            </div>
+        </details>
+
+        <!-- start.bat Launcher Quick Guide (Accordion) -->
+        <details class="runtimes-accordion" id="guide-accordion">
+            <summary class="accordion-summary">
+                <div class="summary-left">
+                    <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                    <div class="summary-title-group">
+                        <h2>📖 คู่มือการใช้งาน One-Click Launcher (start.bat)</h2>
+                        <span class="badge-status-subtle">เมนูควบคุมคอนเทนเนอร์ 15 คำสั่ง</span>
+                    </div>
+                </div>
+                <div class="summary-right">
+                    <span style="font-size: 12px; color: var(--text-muted);">ดับเบิลคลิก <code>start.bat</code> บน Windows</span>
+                </div>
+            </summary>
+
+            <div class="accordion-body">
+                <div class="guide-grid">
+                    <div class="guide-card">
+                        <div class="guide-title">🚀 1. PHP Runtime Services</div>
+                        <ul class="guide-list">
+                            <li><code>[1]</code> <strong>Start Recommended</strong> - รัน PHP 7.4 (:7433) + PHP 8.3 (:8336)</li>
+                            <li><code>[2]</code> <strong>Start Specific Version</strong> - เลือกรันเฉพาะเวอร์ชัน (5.6 - 8.5)</li>
+                            <li><code>[3]</code> <strong>Start All Containers</strong> - รันทุกเวอร์ชันพร้อมกัน (5.6 ถึง 8.5)</li>
+                            <li><code>[4]</code> <strong>Stop PHP Containers</strong> - เลือกหยุดคอนเทนเนอร์ทั้งหมดหรือเฉพาะตัว</li>
+                        </ul>
+                    </div>
+
+                    <div class="guide-card">
+                        <div class="guide-title">🐳 2. Container Manager &amp; Database</div>
+                        <ul class="guide-list">
+                            <li><code>[5 / 6]</code> <strong>Start/Stop Portainer</strong> - จัดการคอนเทนเนอร์ผ่านเว็บ (:9000)</li>
+                            <li><code>[7]</code> <strong>Setup Token</strong> - สร้าง/อัปเดต Token และรหัสผ่าน Portainer</li>
+                            <li><code>[8 / 9]</code> <strong>Start/Stop phpMyAdmin</strong> - จัดการฐานข้อมูลผ่านเว็บ (:8081)</li>
+                        </ul>
+                    </div>
+
+                    <div class="guide-card">
+                        <div class="guide-title">🌐 3. Browser Shortcuts &amp; Diagnostics</div>
+                        <ul class="guide-list">
+                            <li><code>[10]</code> <strong>Open Hub Dashboard</strong> - เปิดหน้า Hub ตรวจหา PHP ที่เปิดอยู่อัตโนมัติ</li>
+                            <li><code>[11 / 12]</code> <strong>Open Portainer / phpMyAdmin</strong> - เปิดหน้าต่างเครื่องมือในเบราว์เซอร์</li>
+                            <li><code>[13 / 14]</code> <strong>View Status &amp; Detect Env</strong> - ตรวจสอบสถานะและเช็คระบบ WSL/Docker</li>
+                            <li><code>[15]</code> <strong>Stop ALL</strong> - ปิดคอนเทนเนอร์ทั้งหมดใน Workspace (Full Shutdown)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="guide-footer-tip">
+                    💡 <strong>คำแนะนำ:</strong> หากพอร์ตหรือเวอร์ชันใดในหน้า Hub นี้แสดงสถานะ <span class="badge-status offline" style="font-size: 11px; padding: 1px 6px;">● ปิดอยู่</span> ลิงก์จะถูกล็อกไม่ให้คลิกชั่วคราว เพื่อป้องกันการเชื่อมต่อล้มเหลว สามารถเปิดไฟล์ <code>start.bat</code> เพื่อสั่งเริ่มการทำงาน (Start) คอนเทนเนอร์ที่ต้องการได้ทันที
                 </div>
             </div>
         </details>
@@ -1108,8 +1232,8 @@ foreach ($extensions as $ext) {
                     </div>
                 </div>
                 <div style="margin-top: 8px;">
-                    <a href="http://<?= htmlspecialchars($currentHost) ?>:9000/" target="_blank" class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px; width: 100%;">
-                        Open Portainer Dashboard &rarr;
+                    <a href="http://<?= htmlspecialchars($currentHost) ?>:9000/" target="_blank" class="btn btn-secondary <?= $portainerStatus ? '' : 'btn-disabled' ?>" id="card-btn-portainer" style="padding: 6px 10px; font-size: 12px; width: 100%;" title="<?= $portainerStatus ? 'Open Portainer Dashboard' : 'Portainer ปิดอยู่ (กรุณาเปิดผ่าน start.bat)' ?>">
+                        <?= $portainerStatus ? 'Open Portainer Dashboard &rarr;' : 'Portainer ปิดอยู่ &times;' ?>
                     </a>
                 </div>
             </div>
@@ -1264,7 +1388,7 @@ foreach ($extensions as $ext) {
                     <h4 class="footer-heading">Infrastructure &amp; Services</h4>
                     <ul class="footer-links">
                         <li>
-                            <a href="http://<?= htmlspecialchars($currentHost) ?>:9000/" target="_blank">
+                            <a href="http://<?= htmlspecialchars($currentHost) ?>:9000/" target="_blank" id="footer-link-portainer" class="<?= $portainerStatus ? '' : 'f-link-disabled' ?>" title="<?= $portainerStatus ? 'Open Portainer Web UI' : 'Portainer ปิดอยู่ (กรุณาเปิดผ่าน start.bat)' ?>">
                                 <span class="status-dot <?= $portainerStatus ? 'online' : 'offline' ?>" id="footer-dot-portainer"></span>
                                 <span class="f-icon">🐳</span> Portainer Web UI <span class="f-port">:9000</span>
                                 <span class="badge-status <?= $portainerStatus ? 'online' : 'offline' ?>" style="font-size: 11px; padding: 1px 7px;" id="footer-tag-portainer">
@@ -1273,9 +1397,9 @@ foreach ($extensions as $ext) {
                             </a>
                         </li>
                         <li>
-                            <a href="http://<?= htmlspecialchars($currentHost) ?>:8081/" target="_blank">
+                            <a href="http://<?= htmlspecialchars($currentHost) ?>:8081/" target="_blank" id="footer-link-pma" class="<?= $pmaStatus ? '' : 'f-link-disabled' ?>" title="<?= $pmaStatus ? 'Open phpMyAdmin' : 'phpMyAdmin ปิดอยู่ (กรุณาเปิดผ่าน start.bat)' ?>">
                                 <span class="status-dot <?= $pmaStatus ? 'online' : 'offline' ?>" id="footer-dot-pma"></span>
-                                <span class="f-icon">🗄️</span> phpMyAdmin <span class="f-port">:8081</span>
+                                <span class="f-icon">🗄️</span> phpMyAdmin (local) <span class="f-port">:8081</span>
                                 <span class="badge-status <?= $pmaStatus ? 'online' : 'offline' ?>" style="font-size: 11px; padding: 1px 7px;" id="footer-tag-pma">
                                     <?= $pmaStatus ? 'เปิดอยู่' : 'ปิดอยู่' ?>
                                 </span>
@@ -1382,12 +1506,22 @@ foreach ($extensions as $ext) {
             liveStatus[port] = isOnline;
 
             const navDot = document.getElementById(`nav-dot-${port}`);
+            const navLink = document.getElementById(`nav-link-${port}`);
             const rowDot = document.getElementById(`row-dot-${port}`);
             const cardBadge = document.getElementById(`card-badge-${port}`);
+            const info = phpVersions[port] || { name: `PHP (${port})` };
 
             if (isOnline) {
-                // Top Nav Dot
+                // Top Nav Dot & Link (Clickable)
                 if (navDot) navDot.className = 'status-dot online';
+                if (navLink) {
+                    navLink.classList.remove('is-offline');
+                    navLink.href = `http://${host}:${port}/`;
+                    navLink.onclick = null;
+                    navLink.title = isCurrent 
+                        ? `${info.name} (:${port}) - กำลังใช้งานอยู่` 
+                        : `${info.name} (:${port}) - เปิดอยู่ (คลิกเพื่อสลับไปยังเวอร์ชันนี้)`;
+                }
 
                 // Accordion Row Badge
                 if (rowDot) rowDot.className = 'status-dot online';
@@ -1401,8 +1535,14 @@ foreach ($extensions as $ext) {
                     `;
                 }
             } else {
-                // Top Nav Dot
+                // Top Nav Dot & Link (Disabled / Unclickable when offline)
                 if (navDot) navDot.className = 'status-dot offline';
+                if (navLink) {
+                    navLink.classList.add('is-offline');
+                    navLink.removeAttribute('href');
+                    navLink.onclick = function(e) { e.preventDefault(); return false; };
+                    navLink.title = `${info.name} (:${port}) - ปิดอยู่ (กรุณาเปิดผ่าน start.bat)`;
+                }
 
                 // Accordion Row Badge
                 if (rowDot) rowDot.className = 'status-dot offline';
@@ -1552,10 +1692,65 @@ foreach ($extensions as $ext) {
         function applyToolStatus(tool, isOnline) {
             const dot = document.getElementById(`footer-dot-${tool}`);
             const tag = document.getElementById(`footer-tag-${tool}`);
+            const fLink = document.getElementById(`footer-link-${tool}`);
+
             if (dot) dot.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
             if (tag) {
                 tag.className = `badge-status ${isOnline ? 'online' : 'offline'}`;
                 tag.innerText = isOnline ? 'เปิดอยู่' : 'ปิดอยู่';
+            }
+
+            const toolName = (tool === 'portainer') ? 'Portainer' : 'phpMyAdmin';
+            const toolPort = (tool === 'portainer') ? '9000' : '8081';
+
+            if (fLink) {
+                if (isOnline) {
+                    fLink.classList.remove('f-link-disabled');
+                    fLink.href = `http://${host}:${toolPort}/`;
+                    fLink.onclick = null;
+                    fLink.title = `${toolName} (:${toolPort}) - เปิดอยู่ (คลิกเพื่อเปิดเว็บ)`;
+                } else {
+                    fLink.classList.add('f-link-disabled');
+                    fLink.removeAttribute('href');
+                    fLink.onclick = function(e) { e.preventDefault(); return false; };
+                    fLink.title = `${toolName} (:${toolPort}) - ปิดอยู่ (กรุณาเปิดผ่าน start.bat)`;
+                }
+            }
+
+            // Also synchronize Portainer Header and Card buttons
+            if (tool === 'portainer') {
+                const headerBtn = document.getElementById('header-btn-portainer');
+                const cardBtn = document.getElementById('card-btn-portainer');
+
+                if (headerBtn) {
+                    if (isOnline) {
+                        headerBtn.classList.remove('btn-disabled');
+                        headerBtn.href = `http://${host}:9000/`;
+                        headerBtn.onclick = null;
+                        headerBtn.title = 'Manage containers, view logs, inspect stats';
+                    } else {
+                        headerBtn.classList.add('btn-disabled');
+                        headerBtn.removeAttribute('href');
+                        headerBtn.onclick = function(e) { e.preventDefault(); return false; };
+                        headerBtn.title = 'Portainer ปิดอยู่ (กรุณาเปิดผ่าน start.bat)';
+                    }
+                }
+
+                if (cardBtn) {
+                    if (isOnline) {
+                        cardBtn.classList.remove('btn-disabled');
+                        cardBtn.href = `http://${host}:9000/`;
+                        cardBtn.onclick = null;
+                        cardBtn.innerHTML = 'Open Portainer Dashboard &rarr;';
+                        cardBtn.title = 'Open Portainer Dashboard';
+                    } else {
+                        cardBtn.classList.add('btn-disabled');
+                        cardBtn.removeAttribute('href');
+                        cardBtn.onclick = function(e) { e.preventDefault(); return false; };
+                        cardBtn.innerHTML = 'Portainer Offline &times;';
+                        cardBtn.title = 'Portainer ปิดอยู่ (กรุณาเปิดผ่าน start.bat)';
+                    }
+                }
             }
         }
 
