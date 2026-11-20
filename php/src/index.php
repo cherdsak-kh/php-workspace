@@ -41,6 +41,14 @@ $phpVersions = [
         'desc' => 'Transitional projects (Smarty 3/4, MySQLi, GD, Zip)',
         'badge_color' => '#38bdf8',
     ],
+    '8030' => [
+        'service' => 'php80',
+        'version' => '8.0.30',
+        'name' => 'PHP 8.0',
+        'tag' => 'PHP 8 Era',
+        'desc' => 'PHP 8.0 transition (Named arguments, Attributes, Match, Union types)',
+        'badge_color' => '#6366f1',
+    ],
     '8131' => [
         'service' => 'php81',
         'version' => '8.1.34',

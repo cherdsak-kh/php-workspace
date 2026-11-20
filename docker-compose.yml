@@ -33,6 +33,24 @@ services:
     ports:
       - "${PHP74_PORT:-7433}:80"
 
+  php80:
+    container_name: php80
+    image: php-apache:8.0.30
+    restart: "no"
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: 8.0.30-apache
+    extra_hosts:
+      - "DB:${DB_HOST:-host-gateway}"
+      - "hostname:${DB_HOST:-host-gateway}"
+    volumes:
+      - ./php/src:/var/www/html/
+      - ./php/shim.php:/etc/php/shim.php:ro
+    ports:
+      - "${PHP80_PORT:-8030}:80"
+
   php81:
     container_name: php81
     image: php-apache:8.1.34

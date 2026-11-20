@@ -14,6 +14,7 @@ All containers run simultaneously and mount `./php/src` into `/var/www/html`:
 | :--- | :--- | :--- | :--- |
 | **`php56`** | 5.6.40 | `5640` | Legacy projects (mysql extension, old CMS) |
 | **`php74`** | 7.4.33 | `7433` | Transitional legacy (Smarty 3/4, early modern PHP) |
+| **`php80`** | 8.0.30 | `8030` | PHP 8.0 transition (Attributes, Match, Union types) |
 | **`php81`** | 8.1.34 | `8131` | Modern PHP (early strict mode) |
 | **`php82`** | 8.2.35 | `8235` | Modern active projects |
 | **`php83`** | 8.3.36 | `8336` | Default modern standard |

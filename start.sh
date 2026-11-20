@@ -103,23 +103,25 @@ start_specific_php() {
     echo "=============================================================="
     echo "  [1] PHP 5.6  (Port 5640) - Legacy (mysql ext, old CMS)"
     echo "  [2] PHP 7.4  (Port 7433) - Transitional (Smarty 3/4)"
-    echo "  [3] PHP 8.1  (Port 8131) - Early strict mode"
-    echo "  [4] PHP 8.2  (Port 8235) - Modern active"
-    echo "  [5] PHP 8.3  (Port 8336) - Hub default standard"
-    echo "  [6] PHP 8.4  (Port 8427) - Latest stable"
-    echo "  [7] PHP 8.5  (Port 8512) - Experimental / next-gen"
+    echo "  [3] PHP 8.0  (Port 8030) - PHP 8.0 transition"
+    echo "  [4] PHP 8.1  (Port 8131) - Early strict mode"
+    echo "  [5] PHP 8.2  (Port 8235) - Modern active"
+    echo "  [6] PHP 8.3  (Port 8336) - Hub default standard"
+    echo "  [7] PHP 8.4  (Port 8427) - Latest stable"
+    echo "  [8] PHP 8.5  (Port 8512) - Experimental / next-gen"
     echo "  [B] Back to Main Menu"
     echo "=============================================================="
-    echo -n "Select PHP version to start [1-7, B]: "
+    echo -n "Select PHP version to start [1-8, B]: "
     read -r pver
     case "$pver" in
         1) svc="php56"; port="5640" ;;
         2) svc="php74"; port="7433" ;;
-        3) svc="php81"; port="8131" ;;
-        4) svc="php82"; port="8235" ;;
-        5) svc="php83"; port="8336" ;;
-        6) svc="php84"; port="8427" ;;
-        7) svc="php85"; port="8512" ;;
+        3) svc="php80"; port="8030" ;;
+        4) svc="php81"; port="8131" ;;
+        5) svc="php82"; port="8235" ;;
+        6) svc="php83"; port="8336" ;;
+        7) svc="php84"; port="8427" ;;
+        8) svc="php85"; port="8512" ;;
         [Bb]) return ;;
         *) echo "Invalid choice."; sleep 1; return ;;
     esac
@@ -139,30 +141,32 @@ stop_php_menu() {
     echo "  [1] Stop ALL PHP Containers (5.6 to 8.5)"
     echo "  [2] Stop PHP 5.6"
     echo "  [3] Stop PHP 7.4"
-    echo "  [4] Stop PHP 8.1"
-    echo "  [5] Stop PHP 8.2"
-    echo "  [6] Stop PHP 8.3"
-    echo "  [7] Stop PHP 8.4"
-    echo "  [8] Stop PHP 8.5"
+    echo "  [4] Stop PHP 8.0"
+    echo "  [5] Stop PHP 8.1"
+    echo "  [6] Stop PHP 8.2"
+    echo "  [7] Stop PHP 8.3"
+    echo "  [8] Stop PHP 8.4"
+    echo "  [9] Stop PHP 8.5"
     echo "  [B] Back to Main Menu"
     echo "=============================================================="
-    echo -n "Select option [1-8, B]: "
+    echo -n "Select option [1-9, B]: "
     read -r schoice
     case "$schoice" in
         1)
             echo ""
             echo "Stopping all PHP containers..."
-            docker compose stop php56 php74 php81 php82 php83 php84 php85
+            docker compose stop php56 php74 php80 php81 php82 php83 php84 php85
             echo "[OK] All PHP containers stopped."
             read -rp "Press Enter to continue..."
             ;;
         2) docker compose stop php56; read -rp "Stopped php56. Press Enter..." ;;
         3) docker compose stop php74; read -rp "Stopped php74. Press Enter..." ;;
-        4) docker compose stop php81; read -rp "Stopped php81. Press Enter..." ;;
-        5) docker compose stop php82; read -rp "Stopped php82. Press Enter..." ;;
-        6) docker compose stop php83; read -rp "Stopped php83. Press Enter..." ;;
-        7) docker compose stop php84; read -rp "Stopped php84. Press Enter..." ;;
-        8) docker compose stop php85; read -rp "Stopped php85. Press Enter..." ;;
+        4) docker compose stop php80; read -rp "Stopped php80. Press Enter..." ;;
+        5) docker compose stop php81; read -rp "Stopped php81. Press Enter..." ;;
+        6) docker compose stop php82; read -rp "Stopped php82. Press Enter..." ;;
+        7) docker compose stop php83; read -rp "Stopped php83. Press Enter..." ;;
+        8) docker compose stop php84; read -rp "Stopped php84. Press Enter..." ;;
+        9) docker compose stop php85; read -rp "Stopped php85. Press Enter..." ;;
         [Bb]) return ;;
         *) echo "Invalid choice."; sleep 1 ;;
     esac
@@ -185,7 +189,7 @@ while true; do
         3)
             echo ""
             echo "Starting all PHP containers (PHP 5.6 to 8.5)..."
-            docker compose up -d php56 php74 php81 php82 php83 php84 php85
+            docker compose up -d php56 php74 php80 php81 php82 php83 php84 php85
             echo "Hub Dashboard: http://localhost:8336/"
             read -rp "Press Enter to continue..."
             ;;
@@ -231,7 +235,7 @@ while true; do
         10)
             active_port=""
             active_php=""
-            for s in php83:8336 php85:8512 php74:7433 php84:8427 php82:8235 php81:8131 php56:5640; do
+            for s in php83:8336 php85:8512 php74:7433 php84:8427 php82:8235 php81:8131 php80:8030 php56:5640; do
                 svc="${s%%:*}"
                 port="${s##*:}"
                 if docker compose ps --status running -q "$svc" 2>/dev/null | grep -q .; then

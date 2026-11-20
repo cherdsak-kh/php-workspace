@@ -70,8 +70,8 @@
 | ตัวเลือก | คำสั่ง | รายละเอียด |
 | :--- | :--- | :--- |
 | **`1`** | **Start Recommended PHP** | สั่งรันคอนเทนเนอร์คู่มาตรฐาน **PHP 7.4** (`:7433`) และ **PHP 8.3** (`:8336`) เหมาะสำหรับการพัฒนาทั่วไปส่วนใหญ่ |
-| **`2`** | **Start Specific PHP Version** | เปิดเมนูย่อยเพื่อเลือกเปิดเฉพาะ PHP เวอร์ชันที่ต้องการ:<br>• `[1]` PHP 5.6 (Port 5640) - Legacy (mysql ext, Smarty 2)<br>• `[2]` PHP 7.4 (Port 7433) - Transitional (Smarty 3/4)<br>• `[3]` PHP 8.1 (Port 8131) - Early strict mode<br>• `[4]` PHP 8.2 (Port 8235) - Modern active<br>• `[5]` PHP 8.3 (Port 8336) - Hub default standard<br>• `[6]` PHP 8.4 (Port 8427) - Latest stable<br>• `[7]` PHP 8.5 (Port 8512) - Experimental / next-gen |
-| **`3`** | **Start All PHP Containers** | สั่งรันคอนเทนเนอร์ PHP ทั้ง 7 ตัวพร้อมกัน (PHP 5.6 ถึง 8.5) |
+| **`2`** | **Start Specific PHP Version** | เปิดเมนูย่อยเพื่อเลือกเปิดเฉพาะ PHP เวอร์ชันที่ต้องการ:<br>• `[1]` PHP 5.6 (Port 5640) - Legacy (mysql ext, Smarty 2)<br>• `[2]` PHP 7.4 (Port 7433) - Transitional (Smarty 3/4)<br>• `[3]` PHP 8.0 (Port 8030) - PHP 8.0 transition<br>• `[4]` PHP 8.1 (Port 8131) - Early strict mode<br>• `[5]` PHP 8.2 (Port 8235) - Modern active<br>• `[6]` PHP 8.3 (Port 8336) - Hub default standard<br>• `[7]` PHP 8.4 (Port 8427) - Latest stable<br>• `[8]` PHP 8.5 (Port 8512) - Experimental / next-gen |
+| **`3`** | **Start All PHP Containers** | สั่งรันคอนเทนเนอร์ PHP ทั้ง 8 ตัวพร้อมกัน (PHP 5.6 ถึง 8.5) |
 | **`4`** | **Stop PHP Containers** | เปิดเมนูย่อยเพื่อเลือกหยุด (Stop) คอนเทนเนอร์ PHP ทั้งหมด หรือเลือกหยุดเฉพาะเวอร์ชัน เพื่อประหยัด RAM/CPU ของเครื่อง |
 
 ---

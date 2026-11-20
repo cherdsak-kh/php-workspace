@@ -116,23 +116,25 @@ echo              Start Specific PHP Version
 echo ==============================================================
 echo  [1] PHP 5.6  (Port 5640) - Legacy (mysql ext, old CMS)
 echo  [2] PHP 7.4  (Port 7433) - Transitional (Smarty 3/4)
-echo  [3] PHP 8.1  (Port 8131) - Early strict mode
-echo  [4] PHP 8.2  (Port 8235) - Modern active
-echo  [5] PHP 8.3  (Port 8336) - Hub default standard
-echo  [6] PHP 8.4  (Port 8427) - Latest stable
-echo  [7] PHP 8.5  (Port 8512) - Experimental / next-gen
+echo  [3] PHP 8.0  (Port 8030) - PHP 8.0 transition
+echo  [4] PHP 8.1  (Port 8131) - Early strict mode
+echo  [5] PHP 8.2  (Port 8235) - Modern active
+echo  [6] PHP 8.3  (Port 8336) - Hub default standard
+echo  [7] PHP 8.4  (Port 8427) - Latest stable
+echo  [8] PHP 8.5  (Port 8512) - Experimental / next-gen
 echo  [B] Back to Main Menu
 echo ==============================================================
 set "php_ver="
-set /p php_ver="Select PHP version to start [1-7, B]: "
+set /p php_ver="Select PHP version to start [1-8, B]: "
 
 if "%php_ver%"=="1" set "SVC=php56" & set "PORT=5640" & goto do_start_specific
 if "%php_ver%"=="2" set "SVC=php74" & set "PORT=7433" & goto do_start_specific
-if "%php_ver%"=="3" set "SVC=php81" & set "PORT=8131" & goto do_start_specific
-if "%php_ver%"=="4" set "SVC=php82" & set "PORT=8235" & goto do_start_specific
-if "%php_ver%"=="5" set "SVC=php83" & set "PORT=8336" & goto do_start_specific
-if "%php_ver%"=="6" set "SVC=php84" & set "PORT=8427" & goto do_start_specific
-if "%php_ver%"=="7" set "SVC=php85" & set "PORT=8512" & goto do_start_specific
+if "%php_ver%"=="3" set "SVC=php80" & set "PORT=8030" & goto do_start_specific
+if "%php_ver%"=="4" set "SVC=php81" & set "PORT=8131" & goto do_start_specific
+if "%php_ver%"=="5" set "SVC=php82" & set "PORT=8235" & goto do_start_specific
+if "%php_ver%"=="6" set "SVC=php83" & set "PORT=8336" & goto do_start_specific
+if "%php_ver%"=="7" set "SVC=php84" & set "PORT=8427" & goto do_start_specific
+if "%php_ver%"=="8" set "SVC=php85" & set "PORT=8512" & goto do_start_specific
 if /i "%php_ver%"=="b" goto menu
 
 echo Invalid selection.
@@ -152,7 +154,7 @@ goto menu
 :start_all_php
 echo.
 echo Starting all PHP containers (PHP 5.6 to 8.5)...
-call :run_docker compose up -d php56 php74 php81 php82 php83 php84 php85
+call :run_docker compose up -d php56 php74 php80 php81 php82 php83 php84 php85
 echo.
 echo [OK] All PHP containers started.
 echo.
@@ -167,31 +169,33 @@ echo ==============================================================
 echo  [1] Stop ALL PHP Containers (5.6 to 8.5)
 echo  [2] Stop PHP 5.6
 echo  [3] Stop PHP 7.4
-echo  [4] Stop PHP 8.1
-echo  [5] Stop PHP 8.2
-echo  [6] Stop PHP 8.3
-echo  [7] Stop PHP 8.4
-echo  [8] Stop PHP 8.5
+echo  [4] Stop PHP 8.0
+echo  [5] Stop PHP 8.1
+echo  [6] Stop PHP 8.2
+echo  [7] Stop PHP 8.3
+echo  [8] Stop PHP 8.4
+echo  [9] Stop PHP 8.5
 echo  [B] Back to Main Menu
 echo ==============================================================
 set "stop_choice="
-set /p stop_choice="Select option [1-8, B]: "
+set /p stop_choice="Select option [1-9, B]: "
 
 if "%stop_choice%"=="1" (
     echo.
     echo Stopping all PHP containers...
-    call :run_docker compose stop php56 php74 php81 php82 php83 php84 php85
+    call :run_docker compose stop php56 php74 php80 php81 php82 php83 php84 php85
     echo [OK] All PHP containers stopped.
     pause
     goto menu
 )
 if "%stop_choice%"=="2" set "STOPSVC=php56" & goto do_stop_specific
 if "%stop_choice%"=="3" set "STOPSVC=php74" & goto do_stop_specific
-if "%stop_choice%"=="4" set "STOPSVC=php81" & goto do_stop_specific
-if "%stop_choice%"=="5" set "STOPSVC=php82" & goto do_stop_specific
-if "%stop_choice%"=="6" set "STOPSVC=php83" & goto do_stop_specific
-if "%stop_choice%"=="7" set "STOPSVC=php84" & goto do_stop_specific
-if "%stop_choice%"=="8" set "STOPSVC=php85" & goto do_stop_specific
+if "%stop_choice%"=="4" set "STOPSVC=php80" & goto do_stop_specific
+if "%stop_choice%"=="5" set "STOPSVC=php81" & goto do_stop_specific
+if "%stop_choice%"=="6" set "STOPSVC=php82" & goto do_stop_specific
+if "%stop_choice%"=="7" set "STOPSVC=php83" & goto do_stop_specific
+if "%stop_choice%"=="8" set "STOPSVC=php84" & goto do_stop_specific
+if "%stop_choice%"=="9" set "STOPSVC=php85" & goto do_stop_specific
 if /i "%stop_choice%"=="b" goto menu
 
 echo Invalid selection.
@@ -284,6 +288,8 @@ if defined ACTIVE_PORT goto do_open_browser
 call :check_php_running php82 8235
 if defined ACTIVE_PORT goto do_open_browser
 call :check_php_running php81 8131
+if defined ACTIVE_PORT goto do_open_browser
+call :check_php_running php80 8030
 if defined ACTIVE_PORT goto do_open_browser
 call :check_php_running php56 5640
 if defined ACTIVE_PORT goto do_open_browser

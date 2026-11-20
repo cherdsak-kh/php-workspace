@@ -26,6 +26,7 @@ A centralized, containerized Multi-PHP development hub for managing, running, an
 | :--- | :---: | :---: | :--- | :--- |
 | **`php56`** | **5.6.40** | `5640` | Legacy runtime (Debian Stretch archive, mysql/mysqli/gd) | Old CMS, legacy PHP 5.x apps |
 | **`php74`** | **7.4.33** | `7433` | Transitional PHP 7 | Smarty 3/4, transitional projects |
+| **`php80`** | **8.0.30** | `8030` | PHP 8.0 transition | Named arguments, Match, Attributes |
 | **`php81`** | **8.1.34** | `8131` | Early strict mode | Early modern PHP |
 | **`php82`** | **8.2.35** | `8235` | Active modern | Modern stable frameworks |
 | **`php83`** | **8.3.36** | `8336` | Default modern standard | Primary local development port |
@@ -63,7 +64,7 @@ docker compose up -d php83    # Only PHP 8.3
 docker compose up -d php56    # Only PHP 5.6
 
 # 3. Or start ALL PHP versions (5.6 to 8.5)
-docker compose up -d php56 php74 php81 php82 php83 php84 php85
+docker compose up -d php56 php74 php80 php81 php82 php83 php84 php85
 
 # 4. Start Portainer Web App independently (Port 9000)
 docker compose up -d portainer

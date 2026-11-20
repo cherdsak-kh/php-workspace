@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-20
+
+### Added
+- **PHP 8.0 Runtime (`php80`):** Added `php80` service (`php:8.0.30-apache`) on port `8030` (`PHP80_PORT=8030`) to `docker-compose.yml` and `.env.example`.
+- **Launcher & Dashboard Integration:** Added PHP 8.0 (`:8030`) to `start.bat`, `start.sh` (Start Specific, Start All, Stop PHP, and auto-detect dashboard port), and Hub Dashboard (`php/src/index.php`) runtime matrix and version selector.
+
+### Changed
+- **Documentation & Agent Rules:** Updated PHP version matrix, launcher guide, and port lists across `README.md`, `docs/START_BAT_GUIDE.md`, `.agents/AGENTS.md`, and `.agents/rules/workspace-rules.md` to reflect all 8 PHP runtimes (PHP 5.6 to 8.5).
+
 ## [1.3.2] - 2026-11-18
 
 ### Removed
